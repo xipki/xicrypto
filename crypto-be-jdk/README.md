@@ -15,7 +15,8 @@ FIPS), offered as library only.
   |---|---|
   | RSA (PKCS#1 v1.5 and PSS with SHA-1/SHA-2/SHA-3), ECDSA with SHA-1/SHA-2/SHA-3/SHAKE, X25519, X448, AES, DESede, PBKDF2, HKDF, HMAC with SHA-1/SHA-2/SHA-3, SHA-1/SHA-2/SHA-3 digests, SHAKE, SM2/SM3, AES-GMAC | 11+ |
   | Ed25519, Ed448 | 15+ |
-  | ML-DSA, ML-KEM (incl. the context string of ML-DSA and the seed expansion) | 25+ |
+  | ML-DSA, ML-KEM (incl. the context string of ML-DSA) | 25+ |
+  | Seed expansion of ML-DSA and ML-KEM; import of private keys containing the seed | newer than 25 GA |
 
 - On JDK 11 to 15, which have SHA3 only as `MessageDigest`, HmacSHA3-\*, SHA3-\*withRSA,
   RSASSA-PSS with SHA3 (MGF1 with the same hash) and the signing of SHA3-\*withECDSA (RFC 6979
@@ -80,7 +81,8 @@ SunEC supports only the NIST curves P-256, P-384 and P-521. `CryptoJdk` chooses 
 
 | Feature | Behaviour |
 |---|---|
-| ML-DSA context string | `setContext` with a non-empty context throws `InvalidAlgorithmParameterException`; composite ML-DSA signatures are not available. |
+| ML-DSA context string | Requires `--add-exports java.base/sun.security.provider=ALL-UNNAMED`; without it, `setContext` with a non-empty context throws `InvalidAlgorithmParameterException` and composite ML-DSA signatures are not available. |
+| ML-DSA / ML-KEM seeds on JDK 25 GA | The JDK has no seed expansion (`ML_DSA_Impls.seedToExpanded`, `ML_KEM_Impls.seedToExpanded`) and parses only private keys in the expanded-key format; `expandMldsaSeed` / `expandMlkemSeed` throw `UnsupportedOperationException`. The context string is not affected. |
 | ECDH with brainpool, SM2, FRP256v1 | Not supported (xipki uses key agreement only with X25519/X448). |
 | RSA-OAEP names | `OAEPWith<hash>AndMGF1Padding` uses MGF1 with SHA-1 in the JDK; use `RSA/ECB/OAEPPadding` with an `OAEPParameterSpec`. |
 

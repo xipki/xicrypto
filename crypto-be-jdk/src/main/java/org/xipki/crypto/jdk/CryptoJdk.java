@@ -562,7 +562,7 @@ public class CryptoJdk implements CryptoApi {
     if (!JdkCompat.isPqcAvailable()) {
       throw new UnsupportedOperationException(JdkCompat.pqcMessage("ML-DSA seed expansion"));
     }
-    String reason = JdkInternals.Mldsa.unavailableReason();
+    String reason = JdkInternals.Mldsa.seedUnavailableReason();
     if (reason != null) {
       throw new UnsupportedOperationException(reason);
     }

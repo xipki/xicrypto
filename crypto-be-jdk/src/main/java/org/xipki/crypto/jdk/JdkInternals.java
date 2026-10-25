@@ -51,6 +51,8 @@ final class JdkInternals {
 
     private static final String UNAVAILABLE_REASON;
 
+    private static final String SEED_UNAVAILABLE_REASON;
+
     static {
       Constructor<?> newMlDsa = null;
       Method signInternal = null;
@@ -58,18 +60,18 @@ final class JdkInternals {
       Method verifyInternal = null;
       Method seedToExpanded = null;
       String reason = null;
+      String seedReason = null;
 
+      // sign and verify with context
       try {
         Class<?> mlDsa = Class.forName("sun.security.provider.ML_DSA");
         Class<?> mlDsaSig = Class.forName("sun.security.provider.ML_DSA$ML_DSA_Signature");
-        Class<?> impls = Class.forName("sun.security.provider.ML_DSA_Impls");
 
         newMlDsa = mlDsa.getConstructor(int.class);
         signInternal = mlDsa.getMethod("signInternal", byte[].class, byte[].class, byte[].class);
         sigEncode = mlDsa.getMethod("sigEncode", mlDsaSig);
         verifyInternal = mlDsa.getMethod("verifyInternal",
             byte[].class, byte[].class, byte[].class);
-        seedToExpanded = impls.getMethod("seedToExpanded", String.class, byte[].class);
 
         // fails with IllegalAccessException if the package is not exported
         newMlDsa.newInstance(2);
@@ -79,12 +81,25 @@ final class JdkInternals {
             : "the ML-DSA implementation of the JDK is not accessible: " + e;
       }
 
+      // seed expansion, looked up separately: missing in some JDKs (e.g. JDK 25 GA)
+      if (reason != null) {
+        seedReason = reason;
+      } else {
+        try {
+          Class<?> impls = Class.forName("sun.security.provider.ML_DSA_Impls");
+          seedToExpanded = impls.getMethod("seedToExpanded", String.class, byte[].class);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+          seedReason = "the ML-DSA seed expansion of the JDK is not accessible: " + e;
+        }
+      }
+
       NEW_ML_DSA = newMlDsa;
       SIGN_INTERNAL = signInternal;
       SIG_ENCODE = sigEncode;
       VERIFY_INTERNAL = verifyInternal;
       SEED_TO_EXPANDED = seedToExpanded;
       UNAVAILABLE_REASON = reason;
+      SEED_UNAVAILABLE_REASON = seedReason;
     }
 
     private Mldsa() {
@@ -96,6 +111,14 @@ final class JdkInternals {
      */
     static String unavailableReason() {
       return UNAVAILABLE_REASON;
+    }
+
+    /**
+     * Returns why the seed expansion is not available.
+     * @return the reason, or null if available.
+     */
+    static String seedUnavailableReason() {
+      return SEED_UNAVAILABLE_REASON;
     }
 
     /**
@@ -151,7 +174,9 @@ final class JdkInternals {
      * @return the expanded private key.
      */
     static byte[] seedToExpanded(String paramSet, byte[] seed) {
-      checkAvailable();
+      if (SEED_UNAVAILABLE_REASON != null) {
+        throw new ProviderException(SEED_UNAVAILABLE_REASON);
+      }
       try {
         return (byte[]) SEED_TO_EXPANDED.invoke(null, paramSet, seed);
       } catch (InvocationTargetException e) {
