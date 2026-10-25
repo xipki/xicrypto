@@ -1,0 +1,24 @@
+// Copyright (c) 2013-2026 xipki. All rights reserved.
+// License Apache License 2.0
+
+package org.xipki.pkcs11.wrapper;
+
+/**
+ * Extra Params.
+ *
+ * @author Lijun Liao (xipki)
+ */
+public class ExtraParams {
+
+  private int ecOrderBitSize;
+
+  public int ecOrderBitSize() {
+    return ecOrderBitSize;
+  }
+
+  public ExtraParams ecOrderBitSize(int ecOrderBitSize) {
+    this.ecOrderBitSize = ecOrderBitSize;
+    return this;
+  }
+
+}

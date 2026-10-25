@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.xipki.crypto</groupId>
+    <artifactId>xicrypto</artifactId>
+    <version>7.0.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>crypto-extra</artifactId>
+  <name>XiPKI :: ${project.artifactId}</name>
+  <description>
+    The algorithms the JDK lacks (SM2/SM3, EC on further curves, ECDSA and RSA-PSS with SHAKE,
+    AES-GMAC) and the JCA provider XiPKIProvider, used by the crypto backends crypto-be-jdk and
+    crypto-be-bcfips for the algorithms their providers do not support.
+  </description>
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>codec</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-lts8on</artifactId>
+      <version>${bcprov.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/SmDisabledTest.java</exclude>
+            <exclude>**/NoBouncyCastleTest.java</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <!-- runs in its own JVM: the SM algorithms must be disabled before first use -->
+          <execution>
+            <id>sm-disabled</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <excludes combine.self="override"/>
+              <includes>
+                <include>**/SmDisabledTest.java</include>
+              </includes>
+              <systemPropertyVariables>
+                <xipki.crypto.disableSm>true</xipki.crypto.disableSm>
+              </systemPropertyVariables>
+            </configuration>
+          </execution>
+          <!-- the tests that do not need BouncyCastle, without BouncyCastle on the classpath -->
+          <execution>
+            <id>no-bc</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <excludes combine.self="override"/>
+              <includes>
+                <include>**/NoBouncyCastleTest.java</include>
+                <include>**/WycheproofEcdsaTest.java</include>
+                <include>**/VarTimeMultiplierTest.java</include>
+              </includes>
+              <classpathDependencyExcludes>
+                <classpathDependencyExclude>org.bouncycastle:bcprov-lts8on</classpathDependencyExclude>
+              </classpathDependencyExcludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

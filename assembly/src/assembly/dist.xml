@@ -1,0 +1,76 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+  <id>dist</id>
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <formats>
+    <format>tar.gz</format>
+  </formats>
+  <files>
+    <file>
+      <source>src/assembly/README.md</source>
+      <outputDirectory></outputDirectory>
+      <fileMode>0644</fileMode>
+    </file>
+    <file>
+      <source>src/assembly/licenses/bouncycastle-LICENSE.txt</source>
+      <outputDirectory>crypto-be-bc/crypto</outputDirectory>
+      <fileMode>0644</fileMode>
+    </file>
+    <file>
+      <source>src/assembly/licenses/bouncycastle-LICENSE.txt</source>
+      <outputDirectory>crypto-be-bcfips/crypto</outputDirectory>
+      <fileMode>0644</fileMode>
+    </file>
+  </files>
+  <dependencySets>
+    <!-- crypto-be-bc: own jar, named groupId.artifactId-version.jar -->
+    <dependencySet>
+      <outputDirectory>crypto-be-bc/crypto</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
+      <includes>
+        <include>org.xipki.crypto:crypto-be-bc</include>
+      </includes>
+      <outputFileNameMapping>${artifact.groupId}.${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+    </dependencySet>
+    <!-- crypto-be-bc: third-party -->
+    <dependencySet>
+      <outputDirectory>crypto-be-bc/crypto</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
+      <includes>
+        <include>org.bouncycastle:bcprov-lts8on</include>
+      </includes>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+    </dependencySet>
+    <!-- crypto-be-bcfips: own jars, named groupId.artifactId-version.jar -->
+    <dependencySet>
+      <outputDirectory>crypto-be-bcfips/crypto</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
+      <includes>
+        <include>org.xipki.crypto:crypto-extra</include>
+        <include>org.xipki.crypto:crypto-be-bcfips</include>
+      </includes>
+      <outputFileNameMapping>${artifact.groupId}.${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+    </dependencySet>
+    <!-- crypto-be-bcfips: third-party -->
+    <dependencySet>
+      <outputDirectory>crypto-be-bcfips/crypto</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
+      <includes>
+        <include>org.bouncycastle:bc-fips</include>
+        <include>org.bouncycastle:bcpqc-fips</include>
+      </includes>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+    </dependencySet>
+  </dependencySets>
+</assembly>
