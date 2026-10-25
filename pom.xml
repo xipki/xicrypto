@@ -65,7 +65,7 @@
   <scm>
     <connection>scm:git:https://github.com/xipki/xicrypto.git</connection>
     <developerConnection>scm:git:https://github.com/xipki/xicrypto.git</developerConnection>
-    <url>https://github.com/xipki/xicrypto<i/url>
+    <url>https://github.com/xipki/xicrypto</url>
   </scm>
   <build>
     <plugins>
