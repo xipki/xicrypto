@@ -13,6 +13,7 @@ import org.xipki.codec.exception.CodecException;
 import org.xipki.codec.Hex;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigInteger;
 
 /**
  * CborDecoder test: the byte array and the stream decoder.
@@ -73,7 +74,7 @@ public class CborDecoderTest {
 
   @Test
   public void testReadUint() throws Exception {
-    Assert.assertEquals(java.math.BigInteger.valueOf(10),
+    Assert.assertEquals(BigInteger.valueOf(10),
         new ByteArrayCborDecoder(Hex.decode("0a")).readUint());
     // negative integer -11
     Assert.assertThrows(CodecException.class,

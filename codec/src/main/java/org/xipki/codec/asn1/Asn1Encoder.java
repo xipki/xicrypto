@@ -4,7 +4,7 @@
 package org.xipki.codec.asn1;
 
 import org.xipki.codec.util.Args;
-import org.xipki.codec.ByteArraySink;
+import org.xipki.codec.internal.ByteArraySink;
 import org.xipki.codec.exception.CodecException;
 
 import java.io.ByteArrayOutputStream;
@@ -356,7 +356,7 @@ public abstract class Asn1Encoder {
       try {
         m_os.write(b);
       } catch (IOException e) {
-        throw new CodecException.CodecIOException(e);
+        throw new CodecException(e);
       }
     }
 
@@ -365,7 +365,7 @@ public abstract class Asn1Encoder {
       try {
         m_os.write(bytes, off, len);
       } catch (IOException e) {
-        throw new CodecException.CodecIOException(e);
+        throw new CodecException(e);
       }
     }
 

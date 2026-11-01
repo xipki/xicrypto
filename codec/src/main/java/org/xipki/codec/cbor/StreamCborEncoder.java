@@ -32,7 +32,7 @@ public class StreamCborEncoder extends CborEncoder implements AutoCloseable {
     try {
       m_os.write(b);
     } catch (IOException e) {
-      throw new CodecException.CodecIOException(e);
+      throw new CodecException(e);
     }
   }
 
@@ -41,7 +41,7 @@ public class StreamCborEncoder extends CborEncoder implements AutoCloseable {
     try {
       m_os.write(b);
     } catch (IOException e) {
-      throw new CodecException.CodecIOException(e);
+      throw new CodecException(e);
     }
   }
 
@@ -50,7 +50,7 @@ public class StreamCborEncoder extends CborEncoder implements AutoCloseable {
     try {
       m_os.write(bytes, off, len);
     } catch (IOException e) {
-      throw new CodecException.CodecIOException(e);
+      throw new CodecException(e);
     }
   }
 

@@ -46,8 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Chooses per curve between the EC implementation of the JDK (SunEC) and the one of xicrypto
- * (own instance of the backend), for the curves the JDK lacks, such as brainpool, SM2 or
- * FRP256v1.
+ * (own instance of the backend), for the curves the JDK lacks, such as brainpool or SM2.
  * <p>
  * The decision must be made by curve: SunEC still knows the brainpool curves in its curve
  * table, it accepts brainpool public keys and only fails when verifying a signature. A curve is
@@ -197,8 +196,6 @@ final class EcRouting {
   /**
    * EC key factory that chooses the implementation by the curve of the key (spec), see
    * {@link EcRouting}. {@link #getProvider()} returns null.
-   *
-   * @author Lijun Liao (xipki)
    */
   static final class KeyFactoryImpl extends KeyFactory {
 
@@ -267,8 +264,6 @@ final class EcRouting {
   /**
    * EC key pair generator: SunEC if it supports the curve, otherwise the XiPKI provider, see
    * {@link EcRouting}. {@link #getProvider()} returns null.
-   *
-   * @author Lijun Liao (xipki)
    */
   static final class KeyPairGeneratorImpl extends KeyPairGenerator {
 
@@ -334,8 +329,6 @@ final class EcRouting {
   /**
    * ECDSA signature that chooses the implementation by the curve of the key, see
    * {@link EcRouting}. {@link #getProvider()} returns null.
-   *
-   * @author Lijun Liao (xipki)
    */
   static final class SignatureImpl extends Signature {
 

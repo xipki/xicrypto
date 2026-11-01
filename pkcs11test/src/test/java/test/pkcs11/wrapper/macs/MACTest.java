@@ -15,7 +15,6 @@ import test.pkcs11.wrapper.TestBase;
 import test.pkcs11.wrapper.TestHSMs;
 
 import java.math.BigInteger;
-import java.security.SecureRandom;
 
 import static org.xipki.pkcs11.wrapper.PKCS11T.CKF_GENERATE;
 import static org.xipki.pkcs11.wrapper.PKCS11T.CKF_SIGN;
@@ -146,7 +145,7 @@ public class MACTest {
       if (ckm == null) {
         LOG.info("import secret MAC key (generation not supported)");
         byte[] keyValue = new byte[keyBytesLen];
-        new SecureRandom().nextBytes(keyValue);
+        random.nextBytes(keyValue);
         secretMACKey = token.importSecretKey(keyValue, macKeyTemplate);
       } else {
         LOG.info("generate secret MAC key");

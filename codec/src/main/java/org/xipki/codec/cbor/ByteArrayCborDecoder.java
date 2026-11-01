@@ -7,7 +7,7 @@
 package org.xipki.codec.cbor;
 
 import org.xipki.codec.util.Args;
-import org.xipki.codec.ByteArraySource;
+import org.xipki.codec.internal.ByteArraySource;
 import org.xipki.codec.exception.CodecException;
 
 import java.io.IOException;

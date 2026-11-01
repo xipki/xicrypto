@@ -13,7 +13,6 @@ import org.xipki.pkcs11.wrapper.PKCS11T;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.SecureRandom;
 
 /**
  * Xi Constants.
@@ -162,9 +161,9 @@ public class XiConstants {
       return dkSize;
     }
 
-    public KeyPair generateKeyPair(SecureRandom random) throws HsmException {
+    public KeyPair generateKeyPair() throws HsmException {
       try {
-        return cryptoApi.generateKeyPair(cryptoVariant, random);
+        return cryptoApi.generateKeyPair(cryptoVariant);
       } catch (Exception e) {
         throw new HsmException(PKCS11T.CKR_GENERAL_ERROR, "error generating keypair " + name(), e);
       }

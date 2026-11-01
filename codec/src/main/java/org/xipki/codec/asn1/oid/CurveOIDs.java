@@ -22,8 +22,6 @@ public class CurveOIDs {
 
   public static final Asn1Oid sm2p256v1 = GmOIDs.sm2p256v1;
 
-  public static final Asn1Oid frp256v1 = OIDs.initOid("1.2.250.1.223.101.256.1", "frp256v1");
-
   public static final Asn1Oid secp192r1 = X9OIDs.prime192v1;
 
   public static final Asn1Oid secp224r1 = OIDs.initOid("1.3.132.0.33", "secp224r1");

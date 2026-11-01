@@ -12,7 +12,6 @@ import org.xipki.crypto.api.CryptoApiFactory;
 import org.xipki.pkcs11.wrapper.PKCS11T;
 import org.xipki.pkcs11.xihsm.util.HsmException;
 
-import java.security.SecureRandom;
 import java.util.Arrays;
 
 /**
@@ -82,14 +81,14 @@ public enum MontgomeryCurveEnum {
     return curve;
   }
 
-  public byte[][] generateKeyPair(SecureRandom random) {
+  public byte[][] generateKeyPair() {
     byte[] sk;
     byte[] pk;
     if (this == X25519) {
-      sk = cryptoApi.generateX25519PrivateKey(random);
+      sk = cryptoApi.generateX25519PrivateKey();
       pk = cryptoApi.generateX25519PublicKey(sk);
     } else {
-      sk = cryptoApi.generateX448PrivateKey(random);
+      sk = cryptoApi.generateX448PrivateKey();
       pk = cryptoApi.generateX448PublicKey(sk);
     }
     return new byte[][]{sk, pk};

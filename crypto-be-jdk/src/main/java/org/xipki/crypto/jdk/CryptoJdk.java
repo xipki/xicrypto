@@ -11,23 +11,21 @@ import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
 import org.xipki.codec.asn1.oid.NistOIDs;
 import org.xipki.codec.asn1.oid.PkcsOIDs;
-import org.xipki.codec.util.Arrays;
+import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.api.AlgorithmNames;
 import org.xipki.crypto.api.CryptoApi;
-import org.xipki.crypto.api.ECCurve;
-import org.xipki.crypto.api.ECPoint;
 import org.xipki.crypto.api.MldsaVariant;
 import org.xipki.crypto.api.MlkemVariant;
 import org.xipki.crypto.api.SecretWithEncap;
+import org.xipki.crypto.api.SecretWithEncapImpl;
 import org.xipki.crypto.api.X9ECParameters;
-import org.xipki.crypto.extra.Primitives;
-import org.xipki.crypto.extra.Shake;
-import org.xipki.crypto.extra.XiPKIProvider;
-import org.xipki.crypto.extra.ec.math.EcCurve;
-import org.xipki.crypto.extra.ec.math.WeierstrassCurve;
-import org.xipki.crypto.extra.ec.math.WeierstrassPoint;
+import org.xipki.crypto.jdk.internal.Primitives;
+import org.xipki.crypto.jdk.internal.XiPKIProvider;
+import org.xipki.crypto.jdk.internal.digest.Shake;
+import org.xipki.crypto.jdk.internal.ec.XiEcParameters;
 
 import javax.crypto.Cipher;
+import javax.crypto.KEM;
 import javax.crypto.KeyAgreement;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
@@ -40,8 +38,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -58,7 +54,9 @@ import java.security.spec.PSSParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.security.spec.XECPrivateKeySpec;
 import java.security.spec.XECPublicKeySpec;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,12 +65,11 @@ import java.util.regex.Pattern;
 
 /**
  * Crypto backend using only the providers of the JDK (SunJCE, SunEC, SunRsaSign, SUN).
- * Runs on JDK 11 or later; ML-DSA and ML-KEM require JDK 25+, EdDSA JDK 15+, HmacSHA3 and SHA3
- * with RSA JDK 16+ ({@link JdkCompat}).
+ * Requires JDK 25 or later.
  * <p>
  * Not supported, the callers provide a fallback or the feature is unavailable:
  * <ul>
- *   <li>ECDH with the curves brainpool, SM2 and FRP256v1.</li>
+ *   <li>ECDH with the curves brainpool and SM2.</li>
  * </ul>
  * <p>
  * Non-empty ML-DSA context strings ({@link #setContext(Signature, byte[])}) are supported with
@@ -82,8 +79,8 @@ import java.util.regex.Pattern;
  * The algorithms the JDK does not support are provided by an own instance of the XiPKI
  * provider (module xicrypto, not registered in {@link Security}), with the primitives of the
  * JDK providers: SM3, SM3withSM2, RSA-PSS and ECDSA with SHAKE, AES-GMAC, the XOF SHAKE and the
- * EC arithmetic ({@link #getByOID(Asn1Oid)}). For the EC curves the JDK lacks (brainpool, SM2,
- * FRP256v1), the EC KeyFactory, KeyPairGenerator and the ECDSA signatures choose per curve
+ * EC arithmetic ({@link #getByOID(Asn1Oid)}). For the EC curves the JDK lacks (brainpool, SM2),
+ * the EC KeyFactory, KeyPairGenerator and the ECDSA signatures choose per curve
  * between SunEC and XiPKI (see {@link EcRouting}); these objects have no provider
  * ({@code getProvider()} returns null).
  *
@@ -91,8 +88,9 @@ import java.util.regex.Pattern;
  */
 public class CryptoJdk implements CryptoApi {
 
+  /** SHA1WITHRSAANDMGF1, or the hash (SHA, SHA3-) and its size in group 1 and 2. */
   private static final Pattern RSA_PSS_NAME =
-      Pattern.compile("(SHA(?:3-)?)(224|256|384|512)WITHRSAANDMGF1");
+      Pattern.compile("SHA1WITHRSAANDMGF1|(SHA(?:3-)?)(224|256|384|512)WITHRSAANDMGF1");
 
   private static final Map<String, String> CIPHER_NAMES = new HashMap<>();
 
@@ -100,11 +98,11 @@ public class CryptoJdk implements CryptoApi {
 
   private static final byte[] X448_BASE = new byte[56];
 
-  private static final SecureRandom DEFAULT_RANDOM = new SecureRandom();
+  /** The random of this backend, see {@link #getSecureRandom()}. */
+  static final SecureRandom DEFAULT_RANDOM = new SecureRandom();
 
   private static final Map<String, Provider> PROVIDERS = new ConcurrentHashMap<>();
 
-  private static final Map<Asn1Oid, X9ECParameters> XI_CURVES = new ConcurrentHashMap<>();
 
   /**
    * The XiPKIProvider (module xicrypto) for the algorithms the JDK does not support, with the
@@ -126,15 +124,6 @@ public class CryptoJdk implements CryptoApi {
   @Override
   public String name() {
     return "jdk";
-  }
-
-  @Override
-  public KeyStore newKeyStore(String algorithm) throws KeyStoreException {
-    try {
-      return getInstance("KeyStore", algorithm, p -> KeyStore.getInstance(algorithm, p));
-    } catch (NoSuchAlgorithmException e) {
-      throw new KeyStoreException(e.getMessage(), e);
-    }
   }
 
   @Override
@@ -189,34 +178,24 @@ public class CryptoJdk implements CryptoApi {
     if (m.matches()) {
       // e.g. SHA256WITHRSAANDMGF1: RSASSA-PSS with MGF1 of the same hash, salt length = hash
       // length, trailer field 1.
-      String hash = m.group(1).equals("SHA") ? "SHA-" + m.group(2) : "SHA3-" + m.group(2);
-      int saltLen = Integer.parseInt(m.group(2)) / 8;
+      String hash;
+      int saltLen;
+      if (m.group(1) == null) {
+        hash = "SHA-1";
+        saltLen = 20;
+      } else {
+        hash = m.group(1).equals("SHA") ? "SHA-" + m.group(2) : "SHA3-" + m.group(2);
+        saltLen = Integer.parseInt(m.group(2)) / 8;
+      }
       PSSParameterSpec spec = new PSSParameterSpec(hash, "MGF1", new MGF1ParameterSpec(hash),
           saltLen, PSSParameterSpec.TRAILER_FIELD_BC);
       Signature sig = getInstance("Signature", "RSASSA-PSS",
           p -> Signature.getInstance("RSASSA-PSS", p));
-      // JDK 11 to 15: RSASSA-PSS of the JDK accepts the SHA3 parameters at setParameter, but
-      // fails at initSign / initVerify. SHA3 for RSASSA-PSS came together with SHA3-*withRSA
-      // (SunRsaSign, JDK 16): without the latter, the RSASSA-PSS of xicrypto is used.
-      boolean jdkSupportsHash = !hash.startsWith("SHA3-")
-          || sig.getProvider().getService("Signature", hash + "withRSA") != null;
       try {
-        if (!jdkSupportsHash) {
-          throw new InvalidAlgorithmParameterException("RSASSA-PSS of "
-              + sig.getProvider().getName() + " does not support " + hash);
-        }
         sig.setParameter(spec);
         return sig;
       } catch (InvalidAlgorithmParameterException e) {
-        // RSASSA-PSS of the JDK without the hash: use the one of xicrypto
-        try {
-          Signature xiSig = Signature.getInstance("RSASSA-PSS", XIPKI);
-          xiSig.setParameter(spec);
-          return xiSig;
-        } catch (InvalidAlgorithmParameterException e2) {
-          e.addSuppressed(e2);
-          throw new NoSuchAlgorithmException("unsupported " + algorithm, e);
-        }
+        throw new NoSuchAlgorithmException("unsupported " + algorithm, e);
       }
     }
 
@@ -255,10 +234,7 @@ public class CryptoJdk implements CryptoApi {
     if (EcRouting.isEnabled() && EcRouting.isEcKeyAlgorithm(algorithm)) {
       return new EcRouting.KeyFactoryImpl();
     }
-    KeyFactory kf = getInstance("KeyFactory", algorithm,
-        p -> KeyFactory.getInstance(algorithm, p));
-    // JDK 11: the encoding of XDH keys is not that of RFC 8410 (JDK-8213363)
-    return Jdk11Xdh.isNeeded(algorithm) ? new Jdk11Xdh.Rfc8410KeyFactory(kf) : kf;
+    return getInstance("KeyFactory", algorithm, p -> KeyFactory.getInstance(algorithm, p));
   }
 
   @Override
@@ -266,10 +242,8 @@ public class CryptoJdk implements CryptoApi {
     if (EcRouting.isEnabled() && EcRouting.isEcKeyAlgorithm(algorithm)) {
       return new EcRouting.KeyPairGeneratorImpl();
     }
-    KeyPairGenerator kpGen = getInstance("KeyPairGenerator", algorithm,
+    return getInstance("KeyPairGenerator", algorithm,
         p -> KeyPairGenerator.getInstance(algorithm, p));
-    // JDK 11: the encoding of XDH keys is not that of RFC 8410 (JDK-8213363)
-    return Jdk11Xdh.isNeeded(algorithm) ? new Jdk11Xdh.Rfc8410KeyPairGenerator(kpGen) : kpGen;
   }
 
   @Override
@@ -299,14 +273,6 @@ public class CryptoJdk implements CryptoApi {
   @Override
   public PrivateKey getPrivateKey(PrivateKeyInfo privateKeyInfo) throws InvalidKeySpecException {
     Asn1Oid oid = privateKeyInfo.getPrivateKeyAlgorithm().getAlgorithm();
-    if (isEdecKey(oid) && (privateKeyInfo.version() != 0 || privateKeyInfo.hasPublicKey())) {
-      // OneAsymmetricKey (RFC 5958, version 1, with the public key), as written e.g. by
-      // BouncyCastle: JDK 11 to 15 accept only version 0. The public key is derived from the
-      // private key anyway.
-      privateKeyInfo = new PrivateKeyInfo(privateKeyInfo.getPrivateKeyAlgorithm(),
-          privateKeyInfo.privateKey());
-    }
-
     byte[] encoded = privateKeyInfo.getEncoded();
     try {
       return newKeyFactory(oid.getId()).generatePrivate(new PKCS8EncodedKeySpec(encoded));
@@ -314,7 +280,7 @@ public class CryptoJdk implements CryptoApi {
       throw new InvalidKeySpecException("unsupported key algorithm " + oid.getId()
           + ": " + e.getMessage(), e);
     } finally {
-      Arrays.clear(encoded);
+      XiArrays.clear(encoded);
     }
   }
 
@@ -350,8 +316,7 @@ public class CryptoJdk implements CryptoApi {
   }
 
   /**
-   * HKDF-SHA256 (RFC 5869) on the HmacSHA256 of the JDK. The KDF API of the JDK
-   * ({@code javax.crypto.KDF}) is not used, because it requires JDK 25 at compile time.
+   * HKDF-SHA256 (RFC 5869) on the HmacSHA256 of the JDK.
    */
   @Override
   public byte[] hkdfSha256Derive(byte[] ikm, byte[] salt, byte[] info, int outputKeyLen) {
@@ -378,15 +343,15 @@ public class CryptoJdk implements CryptoApi {
             mac.update(info);
           }
           mac.update((byte) i);
-          Arrays.clear(t);
+          XiArrays.clear(t);
           t = mac.doFinal();
           int n = Math.min(hashLen, outputKeyLen - off);
           System.arraycopy(t, 0, okm, off, n);
           off += n;
         }
       } finally {
-        Arrays.clear(prk);
-        Arrays.clear(t);
+        XiArrays.clear(prk);
+        XiArrays.clear(t);
       }
       return okm;
     } catch (GeneralSecurityException e) {
@@ -395,8 +360,8 @@ public class CryptoJdk implements CryptoApi {
   }
 
   @Override
-  public SecureRandom getSecureRandom(SecureRandom random) {
-    return random != null ? random : DEFAULT_RANDOM;
+  public SecureRandom getSecureRandom() {
+    return DEFAULT_RANDOM;
   }
 
   /**
@@ -405,14 +370,13 @@ public class CryptoJdk implements CryptoApi {
    */
   @Override
   public X9ECParameters getByOID(Asn1Oid oid) {
-    EcCurve curve = EcCurve.ofOid(oid);
-    return (curve == null) ? null : XI_CURVES.computeIfAbsent(oid, k -> new XiEcParameters(curve));
+    return XiEcParameters.of(oid);
   }
 
   @Override
-  public byte[] generateX25519PrivateKey(SecureRandom rnd) {
+  public byte[] generateX25519PrivateKey() {
     byte[] k = new byte[32];
-    getSecureRandom(rnd).nextBytes(k);
+    DEFAULT_RANDOM.nextBytes(k);
     // clamping, as in RFC 7748, section 5
     k[0] &= (byte) 0xF8;
     k[31] &= 0x7F;
@@ -431,9 +395,9 @@ public class CryptoJdk implements CryptoApi {
   }
 
   @Override
-  public byte[] generateX448PrivateKey(SecureRandom rnd) {
+  public byte[] generateX448PrivateKey() {
     byte[] k = new byte[56];
-    getSecureRandom(rnd).nextBytes(k);
+    DEFAULT_RANDOM.nextBytes(k);
     // clamping, as in RFC 7748, section 5
     k[0] &= (byte) 0xFC;
     k[55] |= (byte) 0x80;
@@ -479,34 +443,27 @@ public class CryptoJdk implements CryptoApi {
   }
 
   @Override
-  public KeyPair generateKeyPair(MldsaVariant variant, SecureRandom random)
-      throws NoSuchAlgorithmException {
-    // the constants NamedParameterSpec.ML_DSA_* require JDK 24 at compile time
-    NamedParameterSpec spec = new NamedParameterSpec(variant == MldsaVariant.ml_dsa_44
-        ? "ML-DSA-44" : variant == MldsaVariant.ml_dsa_65 ? "ML-DSA-65" : "ML-DSA-87");
-    return generateKeyPair("ML-DSA", spec, random);
+  public KeyPair generateKeyPair(MldsaVariant variant) throws NoSuchAlgorithmException {
+    NamedParameterSpec spec = variant == MldsaVariant.ml_dsa_44 ? NamedParameterSpec.ML_DSA_44
+        : variant == MldsaVariant.ml_dsa_65 ? NamedParameterSpec.ML_DSA_65
+        : NamedParameterSpec.ML_DSA_87;
+    return generateKeyPair("ML-DSA", spec);
   }
 
   @Override
-  public KeyPair generateKeyPair(MlkemVariant variant, SecureRandom random)
-      throws NoSuchAlgorithmException {
-    // the constants NamedParameterSpec.ML_KEM_* require JDK 24 at compile time
-    NamedParameterSpec spec = new NamedParameterSpec(variant == MlkemVariant.ml_kem_512
-        ? "ML-KEM-512" : variant == MlkemVariant.ml_kem_768 ? "ML-KEM-768" : "ML-KEM-1024");
-    return generateKeyPair("ML-KEM", spec, random);
+  public KeyPair generateKeyPair(MlkemVariant variant) throws NoSuchAlgorithmException {
+    NamedParameterSpec spec = variant == MlkemVariant.ml_kem_512 ? NamedParameterSpec.ML_KEM_512
+        : variant == MlkemVariant.ml_kem_768 ? NamedParameterSpec.ML_KEM_768
+        : NamedParameterSpec.ML_KEM_1024;
+    return generateKeyPair("ML-KEM", spec);
   }
 
-  private static KeyPair generateKeyPair(
-      String algorithm, NamedParameterSpec spec, SecureRandom random)
+  private static KeyPair generateKeyPair(String algorithm, NamedParameterSpec spec)
       throws NoSuchAlgorithmException {
     KeyPairGenerator kpGen = getInstance("KeyPairGenerator", algorithm,
         p -> KeyPairGenerator.getInstance(algorithm, p));
     try {
-      if (random == null) {
-        kpGen.initialize(spec);
-      } else {
-        kpGen.initialize(spec, random);
-      }
+      kpGen.initialize(spec);
     } catch (InvalidAlgorithmParameterException e) {
       throw new NoSuchAlgorithmException(e.getMessage(), e);
     }
@@ -514,13 +471,14 @@ public class CryptoJdk implements CryptoApi {
   }
 
   @Override
-  public SecretWithEncap encapsulateKey(
-      MlkemVariant pqcVariant, byte[] publicKeyData, SecureRandom rnd) {
+  public SecretWithEncap encapsulateKey(MlkemVariant pqcVariant, byte[] publicKeyData) {
     AlgorithmIdentifier algId = mlkemAlgId(pqcVariant);
     try {
       PublicKey publicKey = newKeyFactory("ML-KEM").generatePublic(
           new X509EncodedKeySpec(new SubjectPublicKeyInfo(algId, publicKeyData).getEncoded()));
-      return JdkCompat.Kem.encapsulate(newKem(), publicKey, rnd);
+      KEM.Encapsulated encapsulated = newKem().newEncapsulator(publicKey).encapsulate();
+      return new SecretWithEncapImpl(encapsulated.key().getEncoded(),
+          encapsulated.encapsulation());
     } catch (GeneralSecurityException e) {
       throw new IllegalArgumentException("ML-KEM encapsulation failed: " + e.getMessage(), e);
     }
@@ -545,23 +503,20 @@ public class CryptoJdk implements CryptoApi {
     try {
       PrivateKey privateKey = newKeyFactory("ML-KEM")
           .generatePrivate(new PKCS8EncodedKeySpec(encoded));
-      return JdkCompat.Kem.decapsulate(newKem(), privateKey, encapsulatedKey);
+      return newKem().newDecapsulator(privateKey).decapsulate(encapsulatedKey).getEncoded();
     } catch (GeneralSecurityException e) {
       throw new IllegalArgumentException("ML-KEM decapsulation failed: " + e.getMessage(), e);
     } finally {
-      Arrays.clear(encoded);
+      XiArrays.clear(encoded);
     }
   }
 
   /**
-   * Uses the internals of the JDK, requires JDK 25+ and the JVM option
+   * Uses the internals of the JDK, requires the JVM option
    * {@code --add-exports java.base/sun.security.provider=ALL-UNNAMED}.
    */
   @Override
   public byte[] expandMldsaSeed(MldsaVariant variant, byte[] seed) {
-    if (!JdkCompat.isPqcAvailable()) {
-      throw new UnsupportedOperationException(JdkCompat.pqcMessage("ML-DSA seed expansion"));
-    }
     String reason = JdkInternals.Mldsa.seedUnavailableReason();
     if (reason != null) {
       throw new UnsupportedOperationException(reason);
@@ -576,14 +531,11 @@ public class CryptoJdk implements CryptoApi {
   }
 
   /**
-   * Uses the internals of the JDK, requires JDK 25+ and the JVM option
+   * Uses the internals of the JDK, requires the JVM option
    * {@code --add-exports java.base/com.sun.crypto.provider=ALL-UNNAMED}.
    */
   @Override
   public byte[] expandMlkemSeed(MlkemVariant variant, byte[] seed) {
-    if (!JdkCompat.isPqcAvailable()) {
-      throw new UnsupportedOperationException(JdkCompat.pqcMessage("ML-KEM seed expansion"));
-    }
     if (seed == null || seed.length != 64) {
       throw new IllegalArgumentException("seed must be 64 bytes");
     }
@@ -591,14 +543,6 @@ public class CryptoJdk implements CryptoApi {
     String paramSet = variant == MlkemVariant.ml_kem_512 ? "ML-KEM-512"
         : variant == MlkemVariant.ml_kem_768 ? "ML-KEM-768" : "ML-KEM-1024";
     return JdkInternals.Mlkem.seedToExpanded(paramSet, seed);
-  }
-
-  /**
-   * Returns whether the key is an X25519, X448, Ed25519 or Ed448 key (RFC 8410).
-   */
-  private static boolean isEdecKey(Asn1Oid oid) {
-    return AlgorithmOIDs.id_X25519.equals(oid) || AlgorithmOIDs.id_X448.equals(oid)
-        || AlgorithmOIDs.id_Ed25519.equals(oid) || AlgorithmOIDs.id_Ed448.equals(oid);
   }
 
   private static AlgorithmIdentifier mlkemAlgId(MlkemVariant variant) {
@@ -630,7 +574,7 @@ public class CryptoJdk implements CryptoApi {
   }
 
   private static Provider[] jdkProviders() {
-    java.util.List<Provider> list = new java.util.ArrayList<>();
+    List<Provider> list = new ArrayList<>();
     for (Provider p : Security.getProviders()) {
       if (isAllowed(p)) {
         list.add(p);
@@ -650,9 +594,6 @@ public class CryptoJdk implements CryptoApi {
    */
   private static <T> T getInstance(String type, String algorithm, Factory<T> factory)
       throws NoSuchAlgorithmException {
-    // ML-DSA and ML-KEM require JDK 25+: fail with a clear message
-    JdkCompat.checkPqc(type, algorithm);
-
     String key = type + "/" + algorithm;
     Provider cached = PROVIDERS.get(key);
     if (cached != null) {
@@ -691,116 +632,11 @@ public class CryptoJdk implements CryptoApi {
       }
     }
 
-    throw new NoSuchAlgorithmException(type + " " + algorithm + " not available"
-        + JdkCompat.hint(type, algorithm, JdkCompat.FEATURE), cause);
+    throw new NoSuchAlgorithmException(type + " " + algorithm + " not available", cause);
   }
 
-  /**
-   * Returns a {@code javax.crypto.KEM} instance for ML-KEM, see {@link JdkCompat.Kem}.
-   */
-  private static Object newKem() throws NoSuchAlgorithmException {
-    return getInstance("KEM", "ML-KEM", p -> JdkCompat.Kem.getInstance("ML-KEM", p));
-  }
-
-  /**
-   * Adapter of the curve arithmetic of xicrypto to {@link X9ECParameters} and
-   * {@link ECCurve}: the JDK has no public EC arithmetic.
-   *
-   * @author Lijun Liao (xipki)
-   */
-  private static final class XiEcParameters implements X9ECParameters, ECCurve {
-
-    private final EcCurve curve;
-
-    private final WeierstrassCurve wc;
-
-    XiEcParameters(EcCurve curve) {
-      this.curve = curve;
-      this.wc = curve.weierstrassCurve();
-    }
-
-    @Override
-    public ECCurve getCurve() {
-      return this;
-    }
-
-    @Override
-    public ECPoint getG() {
-      return new Point(wc.getG());
-    }
-
-    @Override
-    public BigInteger getOrder() {
-      return wc.getOrder();
-    }
-
-    @Override
-    public int getFieldSize() {
-      return wc.getFieldSize();
-    }
-
-    @Override
-    public ECPoint decodePoint(byte[] bytes) {
-      return new Point(wc.decodePoint(bytes));
-    }
-
-    /**
-     * Variable-time u1·G + u2·Q of xicrypto.
-     */
-    @Override
-    public ECPoint sumOfTwoMultiplies(BigInteger u1, BigInteger u2, ECPoint q) {
-      ECPoint nq = q.normalize();
-      java.security.spec.ECPoint r = curve.sumOfTwoMultiplies(u1, u2,
-          new java.security.spec.ECPoint(nq.getXCoordBigInt(), nq.getYCoordBigInt()));
-      if (java.security.spec.ECPoint.POINT_INFINITY.equals(r)) {
-        return new Point(wc.infinity());
-      }
-      return decodePoint(curve.encodePoint(r));
-    }
-
-    private final class Point implements ECPoint {
-
-      private final WeierstrassPoint p;
-
-      Point(WeierstrassPoint p) {
-        this.p = p;
-      }
-
-      @Override
-      public ECPoint multiply(BigInteger k) {
-        return new Point(p.multiply(k));
-      }
-
-      @Override
-      public ECPoint add(ECPoint other) {
-        if (!(other instanceof Point)) {
-          throw new IllegalArgumentException("point is not on the same curve");
-        }
-        return new Point(p.add(((Point) other).p));
-      }
-
-      @Override
-      public ECPoint normalize() {
-        return new Point(p.normalize());
-      }
-
-      @Override
-      public BigInteger getXCoordBigInt() {
-        return p.getXCoordBigInt();
-      }
-
-      @Override
-      public BigInteger getYCoordBigInt() {
-        return p.getYCoordBigInt();
-      }
-
-      @Override
-      public byte[] getEncoded(boolean compressed) {
-        return p.getEncoded(compressed);
-      }
-
-    }
-
+  private static KEM newKem() throws NoSuchAlgorithmException {
+    return getInstance("KEM", "ML-KEM", p -> KEM.getInstance("ML-KEM", p));
   }
 
 }

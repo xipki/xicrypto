@@ -52,6 +52,7 @@ public final class AlgorithmNames {
     HMAC_NAMES.put(NistOIDs.id_hmacWithSHA3_256,   "HmacSHA3-256");
     HMAC_NAMES.put(NistOIDs.id_hmacWithSHA3_384,   "HmacSHA3-384");
     HMAC_NAMES.put(NistOIDs.id_hmacWithSHA3_512,   "HmacSHA3-512");
+    HMAC_NAMES.put(GmOIDs.hmac_sm3,                "HmacSM3");
   }
 
   private AlgorithmNames() {

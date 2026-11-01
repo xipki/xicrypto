@@ -37,7 +37,6 @@ public enum KeySpec {
   /** BrainPool P512R1 EC Key */
   BRAINPOOLP512R1("BRAINPOOLP512R1", Kind.WEIERSTRASS, CurveOIDs.brainpoolP512r1),
   SM2("SM2", Kind.WEIERSTRASS, CurveOIDs.sm2p256v1),
-  FRP256V1 ("FRP256V1", Kind.WEIERSTRASS, CurveOIDs.frp256v1),
   // Edwards and Montgomery EC key
   X25519 ("X25519",  Kind.MONTGOMERY, CurveOIDs.id_X25519),
   X448   ("X448",    Kind.MONTGOMERY, CurveOIDs.id_X448),
@@ -208,8 +207,6 @@ public enum KeySpec {
         return EcCurveEnum.BRAINPOOLP512R1;
       case SM2:
         return EcCurveEnum.SM2;
-      case FRP256V1:
-        return EcCurveEnum.FRP256V1;
       case ED25519:
         return EcCurveEnum.ED25519;
       case ED448:
@@ -307,7 +304,6 @@ public enum KeySpec {
       case BRAINPOOLP384R1: return KeySpec.BRAINPOOLP384R1;
       case BRAINPOOLP512R1: return KeySpec.BRAINPOOLP512R1;
       case SM2:       return KeySpec.SM2;
-      case FRP256V1:  return KeySpec.FRP256V1;
       case ED25519:   return KeySpec.ED25519;
       case ED448:     return KeySpec.ED448;
       case X25519:    return KeySpec.X25519;

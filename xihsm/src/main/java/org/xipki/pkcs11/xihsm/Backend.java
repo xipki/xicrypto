@@ -51,6 +51,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -80,7 +81,7 @@ public class Backend {
 
   public static final long MAX_VOLATILE_HANDLE = 0xFFFF_FFFFL;
 
-  private static final SecureRandom rnd = new SecureRandom();
+  private static final SecureRandom rnd = cryptoApi.getSecureRandom();
 
   private final PersistStore persistStore;
 
@@ -272,8 +273,8 @@ public class Backend {
         KeyPair keyPair = kpGen.generateKeyPair();
 
         RSAPrivateCrtKey sk = (RSAPrivateCrtKey) keyPair.getPrivate();
-        java.security.interfaces.RSAPublicKey pk =
-            (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
+        RSAPublicKey pk =
+            (RSAPublicKey) keyPair.getPublic();
 
         BigInteger modulus = pk.getModulus();
         BigInteger publicExponent = pk.getPublicExponent();
@@ -363,7 +364,7 @@ public class Backend {
 
         byte[] ecParams = pkAttrs.removeByteArray(CKA_EC_PARAMS);
         MontgomeryCurveEnum curveEnum = MontgomeryCurveEnum.ofEcParamsNonNull(ecParams);
-        byte[][] keypair = curveEnum.generateKeyPair(rnd);
+        byte[][] keypair = curveEnum.generateKeyPair();
 
         handles = store.nextKeyPairHandles(slotId);
         publicKey = new XiMontgomeryECPublicKey(vendor, cku, newObjectMethod,
@@ -397,7 +398,7 @@ public class Backend {
         long variantCode = pkAttrs.removeNonNullLong(CKA_PARAMETER_SET);
         skAttrs.removeAttributes(CKA_PARAMETER_SET);
         P11MlkemVariant variant = P11MlkemVariant.ofCode(variantCode);
-        KeyPair keyPair = variant.generateKeyPair(getRandom());
+        KeyPair keyPair = variant.generateKeyPair();
 
         // PKCS#11: CKA_SEED, CKA_VALUE (private) and CKA_VALUE (public) are the raw values
         // of FIPS 203, not the ASN.1 structures of RFC 9935.

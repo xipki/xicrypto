@@ -8,8 +8,8 @@ import org.xipki.codec.asn1.crypto.MldsaPrivateKey;
 import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.asn1.oid.NistOIDs;
-import org.xipki.codec.util.Arrays;
 import org.xipki.codec.exception.CodecException;
+import org.xipki.codec.util.XiArrays;
 
 import java.io.ByteArrayOutputStream;
 import java.security.InvalidAlgorithmParameterException;
@@ -226,7 +226,7 @@ final class MldsaSignature extends Signature {
 
   private void clearKeys() {
     if (expandedSk != null) {
-      Arrays.clear(expandedSk);
+      XiArrays.clear(expandedSk);
       expandedSk = null;
     }
     rawPk = null;
@@ -260,12 +260,12 @@ final class MldsaSignature extends Signature {
     }
 
     byte[] rnd = new byte[32];
-    (random != null ? random : new SecureRandom()).nextBytes(rnd);
+    (random != null ? random : CryptoJdk.DEFAULT_RANDOM).nextBytes(rnd);
     byte[] mPrime = formatMessage(message);
     try {
       return JdkInternals.Mldsa.signInternal(level(paramSet), expandedSk(), mPrime, rnd);
     } finally {
-      Arrays.clear(rnd);
+      XiArrays.clear(rnd);
     }
   }
 

@@ -29,8 +29,7 @@ public enum WeierstraussCurveEnum {
   BP256(CurveOIDs.brainpoolP256r1),
   BP384(CurveOIDs.brainpoolP384r1),
   BP512(CurveOIDs.brainpoolP512r1),
-  SM2  (CurveOIDs.sm2p256v1),
-  FRP256V1(CurveOIDs.frp256v1);
+  SM2  (CurveOIDs.sm2p256v1);
 
   private final Asn1Oid asn1Oid;
 

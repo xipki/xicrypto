@@ -179,7 +179,7 @@ public class JsonParser {
   private void expect(char expectedChar) throws CodecException {
     int chr = read();
     if (chr == -1) {
-      throw new CodecException.CodecIOException("EOF reached");
+      throw new CodecException("EOF reached");
     }
 
     if (chr != expectedChar) {
@@ -280,7 +280,7 @@ public class JsonParser {
       signum = -1;
       currentChar = read();
       if (currentChar == -1) {
-        throw new CodecException.CodecIOException("EOF reached");
+        throw new CodecException("EOF reached");
       }
 
       if (currentChar == '.') {
@@ -305,7 +305,7 @@ public class JsonParser {
       // floating point
       currentChar = read();
       if (currentChar == -1) {
-        throw new CodecException.CodecIOException("EOF reached");
+        throw new CodecException("EOF reached");
       }
 
       if (!isDigit(currentChar)) {
@@ -335,7 +335,7 @@ public class JsonParser {
         }
 
         if (currentChar == -1) {
-          throw new CodecException.CodecIOException("EOF reached");
+          throw new CodecException("EOF reached");
         }
 
         if (!isDigit(currentChar)) {
@@ -375,7 +375,7 @@ public class JsonParser {
         currentChar = read();
       }
       if (currentChar == -1) {
-        throw new CodecException.CodecIOException("EOF reached");
+        throw new CodecException("EOF reached");
       }
       if (!isDigit(currentChar)) {
         throw buildUnexpected(currentChar);
@@ -425,7 +425,7 @@ public class JsonParser {
       currentChar = read();
       switch (currentChar) {
         case -1:
-          throw new CodecException.CodecIOException("EOF reached");
+          throw new CodecException("EOF reached");
         case '"':
           break loop;
         case '\\':
@@ -444,7 +444,7 @@ public class JsonParser {
     int currentChar = read();
     switch (currentChar) {
       case -1:
-        throw new CodecException.CodecIOException("EOF reached");
+        throw new CodecException("EOF reached");
       case '\\':
         append('\\');
         break;
@@ -483,7 +483,7 @@ public class JsonParser {
       } else if (currentChar >= 'a' & currentChar <= 'f') {
         chr += (10 + (currentChar - 'a'));
       } else if (currentChar == -1) {
-        throw new CodecException.CodecIOException("EOF reached");
+        throw new CodecException("EOF reached");
       } else {
         throw buildUnexpected(currentChar);
       }
@@ -492,8 +492,9 @@ public class JsonParser {
     append((char) chr);
   }
 
-  private CodecException.UnexpectedCharException buildUnexpected(int chr) {
-    return new CodecException.UnexpectedCharException(this.instream.position(), (char) chr);
+  private CodecException buildUnexpected(int chr) {
+    return new CodecException("Unexpected character '" + (char) chr
+        + "' at position " + this.instream.position() + ".");
   }
 
   private static boolean isDigit(int chr) {
@@ -506,7 +507,7 @@ public class JsonParser {
     }
 
     if (chr == -1) {
-      throw new CodecException.CodecIOException("EOF reached");
+      throw new CodecException("EOF reached");
     }
 
     return chr;

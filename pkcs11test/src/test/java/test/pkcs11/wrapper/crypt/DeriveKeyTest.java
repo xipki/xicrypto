@@ -182,7 +182,7 @@ public class DeriveKeyTest {
       LOG.info("Generated peerKeyId " + peerP11KeyId);
 
       MontgomeryCurveEnum curve = MontgomeryCurveEnum.X25519;
-      byte[][] tempKeyPair = curve.generateKeyPair(random);
+      byte[][] tempKeyPair = curve.generateKeyPair();
 
       byte[] agreedSk = cryptoApi.calculateX25519Agreement(tempKeyPair[0], peerPublicKey);
 

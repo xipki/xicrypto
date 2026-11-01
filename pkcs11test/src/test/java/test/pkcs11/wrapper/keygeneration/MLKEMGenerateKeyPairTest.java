@@ -17,7 +17,6 @@ import org.xipki.pkcs11.wrapper.spec.PKCS11KeyPairType;
 import test.pkcs11.wrapper.TestBase;
 import test.pkcs11.wrapper.TestHSMs;
 
-import java.util.Random;
 
 /**
  * This demo program generates an MLKEM key-pair on the token.
@@ -135,7 +134,7 @@ public class MLKEMGenerateKeyPairTest {
       PKCS11Token token = getToken();
 
       byte[] id = new byte[20];
-      new Random().nextBytes(id);
+      random.nextBytes(id);
 
       PKCS11KeyPairSpec template = new PKCS11KeyPairSpec()
           .token(true).id(id).sensitive(true).private_(true)

@@ -18,7 +18,6 @@ import org.xipki.pkcs11.wrapper.type.CkMechanismInfo;
 import test.pkcs11.wrapper.TestBase;
 import test.pkcs11.wrapper.TestHSMs;
 
-import java.util.Random;
 
 import static org.xipki.pkcs11.wrapper.PKCS11T.*;
 
@@ -131,7 +130,7 @@ public class ECGenerateKeyPairTest {
       }
 
       byte[] id = new byte[20];
-      new Random().nextBytes(id);
+      random.nextBytes(id);
 
       // set the general attributes for the public key
       // OID: 1.2.840.10045.3.1.7 (secp256r1, alias NIST P-256)

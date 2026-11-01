@@ -196,7 +196,7 @@ public class MlkemEncapDecapKeyTest {
       }
 
       byte[] value = template.value();
-      SecretWithEncap encapKey = cryptoApi.encapsulateKey(mlkemParams, value, random);
+      SecretWithEncap encapKey = cryptoApi.encapsulateKey(mlkemParams, value);
 
       PKCS11SecretKeySpec aesKeySpec = new PKCS11SecretKeySpec()
           .keyType(CKK_AES).encrypt(true).decrypt(true).token(false)

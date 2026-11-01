@@ -15,7 +15,6 @@ import org.xipki.pkcs11.wrapper.spec.PKCS11KeyPairType;
 import org.xipki.pkcs11.wrapper.type.CkMechanism;
 import test.pkcs11.wrapper.TestHSMs;
 
-import java.util.Random;
 
 import static org.xipki.pkcs11.wrapper.PKCS11T.CKF_SIGN;
 import static org.xipki.pkcs11.wrapper.PKCS11T.CKK_ML_DSA;
@@ -139,7 +138,7 @@ public class MLDSASignRawDataTest {
       final boolean inToken = false;
 
       byte[] id = new byte[20];
-      new Random().nextBytes(id);
+      random.nextBytes(id);
 
       PKCS11KeyPairSpec template = new PKCS11KeyPairSpec()
           .token(inToken).id(id)

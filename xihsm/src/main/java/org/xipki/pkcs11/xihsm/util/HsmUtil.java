@@ -8,6 +8,7 @@ import org.xipki.codec.Hex;
 import org.xipki.pkcs11.wrapper.PKCS11T;
 import org.xipki.pkcs11.wrapper.type.CkVersion;
 import org.xipki.pkcs11.xihsm.crypt.XiMechanism;
+import org.xipki.crypto.api.CryptoApiFactory;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -20,7 +21,7 @@ import java.util.List;
  */
 public class HsmUtil {
 
-  private static final SecureRandom rnd = new SecureRandom();
+  private static final SecureRandom rnd = CryptoApiFactory.get().getSecureRandom();
 
   public static long[] listToLongs(List<Long> list) {
     long[] ret = new long[list.size()];

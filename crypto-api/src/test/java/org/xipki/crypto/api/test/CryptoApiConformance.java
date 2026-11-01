@@ -13,6 +13,7 @@ import org.xipki.codec.asn1.crypto.MlkemPrivateKey;
 import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.asn1.oid.GmOIDs;
 import org.xipki.codec.asn1.oid.NistOIDs;
 import org.xipki.codec.asn1.oid.OiwOIDs;
 import org.xipki.codec.asn1.oid.PkcsOIDs;
@@ -26,6 +27,7 @@ import org.xipki.crypto.api.X9ECParameters;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
+import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
@@ -57,7 +59,10 @@ import java.util.Arrays;
  */
 public abstract class CryptoApiConformance {
 
-  protected static final SecureRandom RND = new SecureRandom();
+  /** The random of the backend under test. */
+  protected SecureRandom rnd() {
+    return crypto().getSecureRandom();
+  }
 
   private static final byte[] ABC = "abc".getBytes(StandardCharsets.US_ASCII);
 
@@ -66,7 +71,7 @@ public abstract class CryptoApiConformance {
   private static final Asn1Oid[] EC_CURVES = {
       CurveOIDs.secp256r1, CurveOIDs.secp384r1, CurveOIDs.secp521r1,
       CurveOIDs.brainpoolP256r1, CurveOIDs.brainpoolP384r1, CurveOIDs.brainpoolP512r1,
-      CurveOIDs.sm2p256v1, CurveOIDs.frp256v1};
+      CurveOIDs.sm2p256v1};
 
   protected abstract CryptoApi crypto();
 
@@ -78,24 +83,52 @@ public abstract class CryptoApiConformance {
   }
 
   /**
-   * Returns whether the backend supports ML-DSA (e.g. the JDK backend requires JDK 25+).
+   * Returns whether the backend supports ML-DSA (e.g. the provider fips of OpenSSL may lack it).
    */
   protected boolean supportsMldsa() {
     return true;
   }
 
   /**
-   * Returns whether the backend supports ML-KEM (e.g. the JDK backend requires JDK 25+).
+   * Returns whether the backend supports ML-KEM (e.g. the provider fips of OpenSSL may lack it).
    */
   protected boolean supportsMlkem() {
     return true;
   }
 
   /**
-   * Returns whether the backend supports Ed25519 and Ed448 (e.g. the JDK backend requires
-   * JDK 15+).
+   * Returns whether the backend supports Ed25519 and Ed448.
    */
   protected boolean supportsEdDsa() {
+    return true;
+  }
+
+  /**
+   * Returns whether the backend supports SM3 and SM3withSM2 (e.g. not the BC-FIPS backend).
+   */
+  protected boolean supportsSm() {
+    return true;
+  }
+
+  /**
+   * Returns whether the backend supports SHAKE128/256withRSAPSS (e.g. not the BC-FIPS backend).
+   */
+  protected boolean supportsRsaPssShake() {
+    return true;
+  }
+
+  /**
+   * Returns whether the backend supports SHAKE128/256withECDSA (e.g. not the BC-FIPS backend).
+   */
+  protected boolean supportsEcdsaShake() {
+    return true;
+  }
+
+  /**
+   * Returns whether the backend supports X25519 and X448 (e.g. not the BC-FIPS backend, which
+   * runs in the approved-only mode of BC-FIPS).
+   */
+  protected boolean supportsXdh() {
     return true;
   }
 
@@ -221,10 +254,10 @@ public abstract class CryptoApiConformance {
   @Test
   public void testAesCipher() throws Exception {
     byte[] key = new byte[32];
-    RND.nextBytes(key);
+    rnd().nextBytes(key);
     SecretKey aesKey = new SecretKeySpec(key, "AES");
     byte[] iv = new byte[16];
-    RND.nextBytes(iv);
+    rnd().nextBytes(iv);
 
     // AES-CBC by name and by OID must use PKCS#5 padding
     for (String name : new String[]{"AES/CBC/PKCS5Padding", NistOIDs.id_aes256_CBC.getId()}) {
@@ -238,7 +271,7 @@ public abstract class CryptoApiConformance {
 
     // AES-GCM by name and by OID
     byte[] nonce = new byte[12];
-    RND.nextBytes(nonce);
+    rnd().nextBytes(nonce);
     for (String name : new String[]{"AES/GCM/NoPadding", NistOIDs.id_aes256_GCM.getId()}) {
       Cipher cipher = crypto().newCipher(name);
       cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, nonce));
@@ -253,8 +286,8 @@ public abstract class CryptoApiConformance {
     cipher.init(Cipher.ENCRYPT_MODE, aesKey, new IvParameterSpec(iv));
     Assert.assertEquals(32, cipher.doFinal(new byte[32]).length);
 
-    javax.crypto.KeyGenerator kg = crypto().newKeyGenerator("AES");
-    kg.init(128, RND);
+    KeyGenerator kg = crypto().newKeyGenerator("AES");
+    kg.init(128, rnd());
     Assert.assertEquals(16, kg.generateKey().getEncoded().length);
   }
 
@@ -279,7 +312,7 @@ public abstract class CryptoApiConformance {
   public void testDesedeCipher() throws Exception {
     SecretKey key = crypto().newKeyGenerator("DESede").generateKey();
     byte[] iv = new byte[8];
-    RND.nextBytes(iv);
+    rnd().nextBytes(iv);
     for (String name : new String[]{"DESede/CBC/PKCS5Padding", "DESede/CBC/NoPadding"}) {
       Cipher cipher = crypto().newCipher(name);
       cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
@@ -295,7 +328,7 @@ public abstract class CryptoApiConformance {
     kpGen.initialize(2048);
     KeyPair kp = kpGen.generateKeyPair();
 
-    for (String name : new String[]{"SHA256WITHRSA", "SHA3-256WITHRSA",
+    for (String name : new String[]{"SHA256WITHRSA", "SHA3-256WITHRSA", "SHA1WITHRSAANDMGF1",
         "SHA256WITHRSAANDMGF1", "SHA384WITHRSAANDMGF1", "SHA3-256WITHRSAANDMGF1",
         PkcsOIDs.sha256WithRSAEncryption.getId()}) {
       assertSignVerify(name, kp);
@@ -379,8 +412,8 @@ public abstract class CryptoApiConformance {
 
       // u1·G + u2·Q
       BigInteger n = params.getCurve().getOrder();
-      BigInteger u1 = new BigInteger(n.bitLength() - 1, RND);
-      BigInteger u2 = new BigInteger(n.bitLength() - 1, RND);
+      BigInteger u1 = new BigInteger(n.bitLength() - 1, rnd());
+      BigInteger u2 = new BigInteger(n.bitLength() - 1, rnd());
       ECPoint expected = params.getG().multiply(u1).add(p.multiply(u2)).normalize();
       Assert.assertArrayEquals(oid.getId(), expected.getEncoded(false),
           params.sumOfTwoMultiplies(u1, u2, p).normalize().getEncoded(false));
@@ -389,19 +422,44 @@ public abstract class CryptoApiConformance {
 
   @Test
   public void testSm3() throws Exception {
+    Assume.assumeTrue("SM3 not supported", supportsSm());
     // GB/T 32905-2016, example 1
     assertDigest("SM3", "66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0");
+
+    // HmacSM3, by name and by OID, with a key shorter and one longer than the block (64 bytes)
+    for (int keyLen : new int[]{16, 100}) {
+      byte[] key = new byte[keyLen];
+      rnd().nextBytes(key);
+      byte[] expected = null;
+      for (String name : new String[]{"HmacSM3", "HMAC-SM3", GmOIDs.hmac_sm3.getId()}) {
+        Mac mac = crypto().newMac(name);
+        mac.init(new SecretKeySpec(key, "HmacSM3"));
+        mac.update(DATA);
+        byte[] value = mac.doFinal();
+        Assert.assertEquals(name, 32, value.length);
+        if (expected == null) {
+          expected = value;
+        } else {
+          Assert.assertArrayEquals(name, expected, value);
+        }
+        // the same key again after doFinal
+        Assert.assertArrayEquals(name + " again", expected, mac.doFinal(DATA));
+      }
+    }
   }
 
   /**
-   * EC keys and signatures on the curves brainpool, SM2 and FRP256v1.
+   * EC keys and signatures on the curves brainpool and SM2.
    */
   @Test
   public void testEcCurves() throws Exception {
     for (Asn1Oid oid : new Asn1Oid[]{CurveOIDs.brainpoolP256r1, CurveOIDs.brainpoolP384r1,
-        CurveOIDs.brainpoolP512r1, CurveOIDs.frp256v1, CurveOIDs.sm2p256v1}) {
+        CurveOIDs.brainpoolP512r1, CurveOIDs.sm2p256v1}) {
+      if (CurveOIDs.sm2p256v1.equals(oid) && !supportsSm()) {
+        continue;
+      }
       KeyPairGenerator kpGen = crypto().newKeyPairGenerator("EC");
-      kpGen.initialize(new ECGenParameterSpec(oid.getId()), RND);
+      kpGen.initialize(new ECGenParameterSpec(oid.getId()), rnd());
       KeyPair kp = kpGen.generateKeyPair();
 
       String sigAlg = CurveOIDs.sm2p256v1.equals(oid) ? "SM3WITHSM2" : "SHA256WITHECDSA";
@@ -415,9 +473,10 @@ public abstract class CryptoApiConformance {
 
   @Test
   public void testEcdsaWithShake() throws Exception {
+    Assume.assumeTrue("ECDSA with SHAKE not supported", supportsEcdsaShake());
     for (Asn1Oid oid : new Asn1Oid[]{CurveOIDs.secp256r1, CurveOIDs.brainpoolP256r1}) {
       KeyPairGenerator kpGen = crypto().newKeyPairGenerator("EC");
-      kpGen.initialize(new ECGenParameterSpec(oid.getId()), RND);
+      kpGen.initialize(new ECGenParameterSpec(oid.getId()), rnd());
       KeyPair kp = kpGen.generateKeyPair();
       assertSignVerify("SHAKE128WITHECDSA", kp);
       assertSignVerify("SHAKE256WITHECDSA", kp);
@@ -426,8 +485,9 @@ public abstract class CryptoApiConformance {
 
   @Test
   public void testRsaPssWithShake() throws Exception {
+    Assume.assumeTrue("RSA-PSS with SHAKE not supported", supportsRsaPssShake());
     KeyPairGenerator kpGen = crypto().newKeyPairGenerator("RSA");
-    kpGen.initialize(2048, RND);
+    kpGen.initialize(2048, rnd());
     KeyPair kp = kpGen.generateKeyPair();
     assertSignVerify("SHAKE128WITHRSAPSS", kp);
     assertSignVerify("SHAKE256WITHRSAPSS", kp);
@@ -443,8 +503,8 @@ public abstract class CryptoApiConformance {
     // with data: equals the GCM tag over the data as AAD
     byte[] key = new byte[32];
     byte[] nonce = new byte[12];
-    RND.nextBytes(key);
-    RND.nextBytes(nonce);
+    rnd().nextBytes(key);
+    rnd().nextBytes(nonce);
     mac.init(new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, nonce));
     mac.update(DATA);
     byte[] tag = mac.doFinal();
@@ -463,7 +523,7 @@ public abstract class CryptoApiConformance {
       for (String name : alg) {
         KeyPairGenerator kpGen = crypto().newKeyPairGenerator(name);
         // as in xihsm: the generator obtained by OID is initialized with the key size
-        kpGen.initialize(alg[0].equals("ED25519") ? 255 : 448, RND);
+        kpGen.initialize(alg[0].equals("ED25519") ? 255 : 448, rnd());
         KeyPair kp = kpGen.generateKeyPair();
         assertSignVerify(alg[0], kp);
         assertKeyConversion(kp, alg[0]);
@@ -473,6 +533,7 @@ public abstract class CryptoApiConformance {
 
   @Test
   public void testX25519() {
+    Assume.assumeTrue("X25519 not supported", supportsXdh());
     // RFC 7748, section 6.1
     byte[] skA = Hex.decode("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a");
     byte[] pkB = Hex.decode("de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f");
@@ -481,8 +542,8 @@ public abstract class CryptoApiConformance {
     Assert.assertEquals("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742",
         Hex.encode(crypto().calculateX25519Agreement(skA, pkB)));
 
-    byte[] sk1 = crypto().generateX25519PrivateKey(RND);
-    byte[] sk2 = crypto().generateX25519PrivateKey(RND);
+    byte[] sk1 = crypto().generateX25519PrivateKey();
+    byte[] sk2 = crypto().generateX25519PrivateKey();
     Assert.assertEquals(32, sk1.length);
     Assert.assertArrayEquals(
         crypto().calculateX25519Agreement(sk1, crypto().generateX25519PublicKey(sk2)),
@@ -491,6 +552,7 @@ public abstract class CryptoApiConformance {
 
   @Test
   public void testX448() {
+    Assume.assumeTrue("X448 not supported", supportsXdh());
     // RFC 7748, section 6.2
     byte[] skA = Hex.decode("9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28d"
         + "d9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b");
@@ -503,8 +565,8 @@ public abstract class CryptoApiConformance {
             + "b60c0b56fd2464c335543936521c24403085d59a449a5037514a879d",
         Hex.encode(crypto().calculateX448Agreement(skA, pkB)));
 
-    byte[] sk1 = crypto().generateX448PrivateKey(RND);
-    byte[] sk2 = crypto().generateX448PrivateKey(RND);
+    byte[] sk1 = crypto().generateX448PrivateKey();
+    byte[] sk2 = crypto().generateX448PrivateKey();
     Assert.assertEquals(56, sk1.length);
     Assert.assertArrayEquals(
         crypto().calculateX448Agreement(sk1, crypto().generateX448PublicKey(sk2)),
@@ -513,6 +575,7 @@ public abstract class CryptoApiConformance {
 
   @Test
   public void testXdhKeyAgreement() throws Exception {
+    Assume.assumeTrue("X25519 and X448 not supported", supportsXdh());
     for (String name : new String[]{"X25519", "X448"}) {
       KeyPairGenerator kpGen = crypto().newKeyPairGenerator(name);
       KeyPair kp1 = kpGen.generateKeyPair();
@@ -538,7 +601,7 @@ public abstract class CryptoApiConformance {
     String[] names = {"ML-DSA-44", "ML-DSA-65", "ML-DSA-87"};
     MldsaVariant[] variants = MldsaVariant.values();
     for (int i = 0; i < variants.length; i++) {
-      KeyPair kp = crypto().generateKeyPair(variants[i], i == 0 ? null : RND);
+      KeyPair kp = crypto().generateKeyPair(variants[i]);
       assertSignVerify(names[i], kp);
       assertKeyConversion(kp, names[i]);
 
@@ -548,7 +611,7 @@ public abstract class CryptoApiConformance {
     }
 
     // context
-    KeyPair kp = crypto().generateKeyPair(MldsaVariant.ml_dsa_65, RND);
+    KeyPair kp = crypto().generateKeyPair(MldsaVariant.ml_dsa_65);
     Signature sig = crypto().newSignature("ML-DSA-65");
     sig.initSign(kp.getPrivate());
     crypto().setContext(sig, null);
@@ -587,7 +650,7 @@ public abstract class CryptoApiConformance {
     String[] names = {"ML-DSA-44", "ML-DSA-65", "ML-DSA-87"};
     MldsaVariant[] dsaVariants = MldsaVariant.values();
     for (int i = 0; i < dsaVariants.length; i++) {
-      KeyPair kp = crypto().generateKeyPair(dsaVariants[i], RND);
+      KeyPair kp = crypto().generateKeyPair(dsaVariants[i]);
       PrivateKeyInfo skInfo = PrivateKeyInfo.fromEncoded(kp.getPrivate().getEncoded());
       MldsaPrivateKey sk = MldsaPrivateKey.fromEncoded(skInfo.privateKey());
 
@@ -618,7 +681,7 @@ public abstract class CryptoApiConformance {
     int[] dkSizes = {1632, 2400, 3168};
     MlkemVariant[] kemVariants = MlkemVariant.values();
     for (int i = 0; i < kemVariants.length; i++) {
-      KeyPair kp = crypto().generateKeyPair(kemVariants[i], RND);
+      KeyPair kp = crypto().generateKeyPair(kemVariants[i]);
       MlkemPrivateKey sk = MlkemPrivateKey.fromEncoded(
           PrivateKeyInfo.fromEncoded(kp.getPrivate().getEncoded()).privateKey());
 
@@ -635,7 +698,7 @@ public abstract class CryptoApiConformance {
       }
 
       byte[] ek = SubjectPublicKeyInfo.fromEncoded(kp.getPublic().getEncoded()).subjectPublicKey();
-      SecretWithEncap se = crypto().encapsulateKey(kemVariants[i], ek, RND);
+      SecretWithEncap se = crypto().encapsulateKey(kemVariants[i], ek);
       Assert.assertArrayEquals(kemVariants[i].name(), se.secret(),
           crypto().decapsulateKey(kemVariants[i], dk, se.encap()));
     }
@@ -645,7 +708,7 @@ public abstract class CryptoApiConformance {
   public void testMlkem() throws Exception {
     Assume.assumeTrue("ML-KEM not supported", supportsMlkem());
     for (MlkemVariant variant : MlkemVariant.values()) {
-      KeyPair kp = crypto().generateKeyPair(variant, RND);
+      KeyPair kp = crypto().generateKeyPair(variant);
 
       PublicKey pk = crypto().getPublicKey(
           SubjectPublicKeyInfo.fromEncoded(kp.getPublic().getEncoded()));
@@ -658,7 +721,7 @@ public abstract class CryptoApiConformance {
       MlkemPrivateKey sk = MlkemPrivateKey.fromEncoded(
           PrivateKeyInfo.fromEncoded(kp.getPrivate().getEncoded()).privateKey());
 
-      SecretWithEncap encap = crypto().encapsulateKey(variant, rawPk, RND);
+      SecretWithEncap encap = crypto().encapsulateKey(variant, rawPk);
       Assert.assertEquals(32, encap.secret().length);
 
       boolean tested = false;
@@ -675,10 +738,7 @@ public abstract class CryptoApiConformance {
 
   @Test
   public void testMisc() throws Exception {
-    Assert.assertNotNull(crypto().getSecureRandom(null));
-    SecureRandom rnd = new SecureRandom();
-    Assert.assertNotNull(crypto().getSecureRandom(rnd));
-    Assert.assertNotNull(crypto().newKeyStore("PKCS12"));
+    Assert.assertNotNull(crypto().getSecureRandom());
   }
 
   protected void assertSignVerify(String name, KeyPair kp) throws Exception {

@@ -4,16 +4,17 @@
 package test.pkcs11.speed;
 
 import org.slf4j.Logger;
+import org.xipki.codec.speed.SpeedExecutor;
 import org.xipki.pkcs11.wrapper.PKCS11KeyId;
 import org.xipki.pkcs11.wrapper.TokenException;
 import test.pkcs11.wrapper.TestHSMs;
 
 /**
- * Benchmark executor base class.
+ * Speed executor base class.
  *
  * @author Lijun Liao (xipki)
  */
-public abstract class Pkcs11Executor extends BenchmarkExecutor {
+public abstract class Pkcs11Executor extends SpeedExecutor {
 
   protected Pkcs11Executor(String description) {
     super(description);

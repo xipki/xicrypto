@@ -4,9 +4,9 @@
 package org.xipki.codec.asn1;
 
 import org.xipki.codec.util.Args;
-import org.xipki.codec.ByteArraySource;
+import org.xipki.codec.internal.ByteArraySource;
 import org.xipki.codec.exception.CodecException;
-import org.xipki.codec.StreamSource;
+import org.xipki.codec.internal.StreamSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,6 +16,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.time.DateTimeException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -174,7 +175,7 @@ public abstract class Asn1Decoder implements AutoCloseable {
     try {
       return doNextObject0(expectedTag, allowNull);
     } catch (IllegalArgumentException | ArithmeticException | IndexOutOfBoundsException
-             | ClassCastException | java.time.DateTimeException e) {
+             | ClassCastException | DateTimeException e) {
       // The constructors of the ASN.1 objects validate the content and throw unchecked
       // exceptions. For the decoder they indicate a malformed encoding.
       throw new CodecException("malformed encoding: " + e.getMessage(), e);

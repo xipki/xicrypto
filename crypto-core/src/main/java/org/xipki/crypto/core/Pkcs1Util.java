@@ -5,6 +5,7 @@ package org.xipki.crypto.core;
 
 import org.xipki.codec.util.Args;
 import org.xipki.codec.Hex;
+import org.xipki.codec.util.XiArrays;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -238,7 +239,7 @@ public class Pkcs1Util {
     byte[] lHash = hashAlgo.hash(new byte[0]);
     byte[] PS = new byte[k - mLen - 2 * hLen - 2];
 
-    byte[] DB = org.xipki.codec.util.Arrays.concatenate(lHash, PS, new byte[]{1}, M);
+    byte[] DB = XiArrays.concatenate(lHash, PS, new byte[]{1}, M);
     byte[] seed = new byte[hLen];
     random.nextBytes(seed);
     byte[] dbMask = mgf1(hashAlgo, seed, k - hLen - 1);
@@ -251,7 +252,7 @@ public class Pkcs1Util {
     byte[] maskedSeed = xor(seed, seedMask);
 
     // EM = 0x00 || maskedSeed || maskedDB
-    return org.xipki.codec.util.Arrays.concatenate(new byte[]{0}, maskedSeed, maskedDB);
+    return XiArrays.concatenate(new byte[]{0}, maskedSeed, maskedDB);
   }
 
   public static byte[] RSAES_OAEP_DECODE(

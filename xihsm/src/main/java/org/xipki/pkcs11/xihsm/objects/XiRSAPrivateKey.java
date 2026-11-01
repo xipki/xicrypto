@@ -9,7 +9,7 @@ import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.crypto.RSAPrivateKey;
 import org.xipki.codec.asn1.oid.PkcsOIDs;
 import org.xipki.codec.util.Args;
-import org.xipki.codec.util.Arrays;
+import org.xipki.codec.util.XiArrays;
 import org.xipki.pkcs11.wrapper.PKCS11T;
 import org.xipki.pkcs11.wrapper.params.RSA_PKCS_OAEP_PARAMS;
 import org.xipki.pkcs11.wrapper.params.RSA_PKCS_PSS_PARAMS;
@@ -246,7 +246,7 @@ public class XiRSAPrivateKey extends XiPrivateKey {
         byte[] em;
         try {
           em = Pkcs1Util.EMSA_PKCS1_V1_5_ENCODE(
-                Arrays.concatenate(digestInfoPrefix, hash), modulusBitSize);
+                XiArrays.concatenate(digestInfoPrefix, hash), modulusBitSize);
         } catch (Exception e) {
           throw new HsmException(CKR_GENERAL_ERROR, "EMSA_PKCS1_v1_5_encode error", e);
         }

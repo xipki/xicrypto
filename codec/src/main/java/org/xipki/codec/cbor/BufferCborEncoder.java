@@ -3,7 +3,7 @@
 
 package org.xipki.codec.cbor;
 
-import org.xipki.codec.ByteArraySink;
+import org.xipki.codec.internal.ByteArraySink;
 import org.xipki.codec.exception.CodecException;
 
 /**

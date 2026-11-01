@@ -25,9 +25,11 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Signature;
@@ -43,7 +45,10 @@ import java.util.Set;
  */
 public abstract class CryptoApiCrossTest {
 
-  protected static final SecureRandom RND = new SecureRandom();
+  /** The random of the backend under test. */
+  protected SecureRandom rnd() {
+    return backend().getSecureRandom();
+  }
 
   private static final byte[] DATA = "cross test data".getBytes(StandardCharsets.US_ASCII);
 
@@ -74,7 +79,7 @@ public abstract class CryptoApiCrossTest {
   }
 
   /**
-   * Returns whether both backends support ML-DSA (e.g. the JDK backend requires JDK 25+).
+   * Returns whether both backends support ML-DSA (e.g. the provider fips of OpenSSL may lack it).
    */
   protected boolean supportsMldsa() {
     return true;
@@ -88,17 +93,46 @@ public abstract class CryptoApiCrossTest {
   }
 
   /**
-   * Returns whether both backends support ML-KEM (e.g. the JDK backend requires JDK 25+).
+   * Returns whether both backends support ML-KEM (e.g. the provider fips of OpenSSL may lack it).
    */
   protected boolean supportsMlkem() {
     return true;
   }
 
   /**
-   * Returns whether both backends support Ed25519 and Ed448 (e.g. the JDK backend requires
-   * JDK 15+).
+   * Returns whether both backends support Ed25519 and Ed448.
    */
   protected boolean supportsEdDsa() {
+    return true;
+  }
+
+  /**
+   * Returns whether both backends support SM3 and SM3withSM2 (e.g. not the BC-FIPS backend).
+   */
+  protected boolean supportsSm() {
+    return true;
+  }
+
+  /**
+   * Returns whether both backends support SHAKE128/256withRSAPSS (e.g. not the BC-FIPS
+   * backend).
+   */
+  protected boolean supportsRsaPssShake() {
+    return true;
+  }
+
+  /**
+   * Returns whether both backends support SHAKE128/256withECDSA (e.g. not the BC-FIPS backend).
+   */
+  protected boolean supportsEcdsaShake() {
+    return true;
+  }
+
+  /**
+   * Returns whether both backends support X25519 and X448 (e.g. not the BC-FIPS backend, which
+   * runs in the approved-only mode of BC-FIPS).
+   */
+  protected boolean supportsXdh() {
     return true;
   }
 
@@ -113,11 +147,11 @@ public abstract class CryptoApiCrossTest {
 
     CryptoApi ref = reference();
     KeyPairGenerator rsaGen = ref.newKeyPairGenerator("RSA");
-    rsaGen.initialize(2048, RND);
+    rsaGen.initialize(2048, rnd());
     KeyPair rsa = rsaGen.generateKeyPair();
 
     KeyPairGenerator ecGen = ref.newKeyPairGenerator("EC");
-    ecGen.initialize(new ECGenParameterSpec(CurveOIDs.secp256r1.getId()), RND);
+    ecGen.initialize(new ECGenParameterSpec(CurveOIDs.secp256r1.getId()), rnd());
     KeyPair ec = ecGen.generateKeyPair();
 
     String[] names = {
@@ -127,7 +161,7 @@ public abstract class CryptoApiCrossTest {
         signatureProvider(ref, "SHA256WITHRSA", rsa),
         signatureProvider(ref, "SHA256WITHRSAANDMGF1", rsa),
         signatureProvider(ref, "SHA256WITHECDSA", ec),
-        signatureProvider(ref, "SHAKE128WITHECDSA", ec),
+        supportsEcdsaShake() ? signatureProvider(ref, "SHAKE128WITHECDSA", ec) : null,
         name(ref.newCipher("AES/GCM/NoPadding").getProvider()),
         name(rsaGen.getProvider()),
         name(ecGen.getProvider())};
@@ -138,7 +172,7 @@ public abstract class CryptoApiCrossTest {
 
     // the keys of the routing implementations (without provider)
     for (KeyPair kp : new KeyPair[]{rsa, ec}) {
-      for (java.security.Key key : new java.security.Key[]{kp.getPublic(), kp.getPrivate()}) {
+      for (Key key : new Key[]{kp.getPublic(), kp.getPrivate()}) {
         Assert.assertFalse(ref.name() + " generates the key " + key.getClass().getName(),
             key.getClass().getName().startsWith(backend().getClass().getPackage().getName())
             || key.getClass().getName().startsWith("org.bouncycastle."));
@@ -150,7 +184,7 @@ public abstract class CryptoApiCrossTest {
    * Returns the name of the provider, or null if the object is implemented by the backend
    * itself (e.g. one that routes to different providers) and has no provider.
    */
-  private static String name(java.security.Provider provider) {
+  private static String name(Provider provider) {
     return provider == null ? null : provider.getName();
   }
 
@@ -170,6 +204,9 @@ public abstract class CryptoApiCrossTest {
   public void testDigests() throws Exception {
     for (String alg : new String[]{"SHA-1", "SHA-256", "SHA-384", "SHA-512",
         "SHA3-256", "SHA3-512", "SM3"}) {
+      if ("SM3".equals(alg) && !supportsSm()) {
+        continue;
+      }
       Assert.assertArrayEquals(alg, backend().newMessageDigest(alg).digest(DATA),
           reference().newMessageDigest(alg).digest(DATA));
     }
@@ -183,14 +220,24 @@ public abstract class CryptoApiCrossTest {
   @Test
   public void testMacs() throws Exception {
     byte[] key = new byte[32];
-    RND.nextBytes(key);
+    rnd().nextBytes(key);
     for (String alg : new String[]{"HmacSHA1", "HmacSHA256", "HmacSHA512", "HmacSHA3-256"}) {
       Assert.assertArrayEquals(alg, mac(backend(), alg, key, null),
           mac(reference(), alg, key, null));
     }
 
+    if (supportsSm()) {
+      // also with a key longer than the block of SM3 (64 bytes)
+      byte[] longKey = new byte[100];
+      rnd().nextBytes(longKey);
+      for (byte[] k : new byte[][]{key, longKey}) {
+        Assert.assertArrayEquals("HmacSM3 " + k.length, mac(backend(), "HmacSM3", k, null),
+            mac(reference(), "HmacSM3", k, null));
+      }
+    }
+
     byte[] nonce = new byte[12];
-    RND.nextBytes(nonce);
+    rnd().nextBytes(nonce);
     Assert.assertArrayEquals("AES-GMAC", mac(backend(), "AES-GMAC", key, nonce),
         mac(reference(), "AES-GMAC", key, nonce));
   }
@@ -211,8 +258,8 @@ public abstract class CryptoApiCrossTest {
   public void testKdfs() throws Exception {
     byte[] ikm = new byte[32];
     byte[] salt = new byte[16];
-    RND.nextBytes(ikm);
-    RND.nextBytes(salt);
+    rnd().nextBytes(ikm);
+    rnd().nextBytes(salt);
     byte[] info = "info".getBytes(StandardCharsets.US_ASCII);
 
     for (int len : new int[]{16, 32, 100}) {
@@ -231,12 +278,12 @@ public abstract class CryptoApiCrossTest {
   @Test
   public void testCiphers() throws Exception {
     byte[] keyValue = new byte[32];
-    RND.nextBytes(keyValue);
+    rnd().nextBytes(keyValue);
     SecretKey key = new SecretKeySpec(keyValue, "AES");
     byte[] iv = new byte[16];
     byte[] nonce = new byte[12];
-    RND.nextBytes(iv);
-    RND.nextBytes(nonce);
+    rnd().nextBytes(iv);
+    rnd().nextBytes(nonce);
 
     for (CryptoApi[] pair : pairs()) {
       String desc = pair[0].name() + " -> " + pair[1].name();
@@ -276,11 +323,14 @@ public abstract class CryptoApiCrossTest {
   public void testRsaSignatures() throws Exception {
     for (CryptoApi keyGen : new CryptoApi[]{backend(), reference()}) {
       KeyPairGenerator kpGen = keyGen.newKeyPairGenerator("RSA");
-      kpGen.initialize(2048, RND);
+      kpGen.initialize(2048, rnd());
       KeyPair kp = kpGen.generateKeyPair();
       for (String alg : new String[]{"SHA256WITHRSA", "SHA512WITHRSA", "SHA3-256WITHRSA",
-          "SHA256WITHRSAANDMGF1", "SHA512WITHRSAANDMGF1", "SHA3-256WITHRSAANDMGF1",
-          "SHAKE128WITHRSAPSS", "SHAKE256WITHRSAPSS"}) {
+          "SHA1WITHRSAANDMGF1", "SHA256WITHRSAANDMGF1", "SHA512WITHRSAANDMGF1",
+          "SHA3-256WITHRSAANDMGF1", "SHAKE128WITHRSAPSS", "SHAKE256WITHRSAPSS"}) {
+        if (alg.startsWith("SHAKE") && !supportsRsaPssShake()) {
+          continue;
+        }
         assertCrossSignVerify(alg, kp, keyGen);
       }
     }
@@ -298,10 +348,16 @@ public abstract class CryptoApiCrossTest {
 
     for (CryptoApi keyGen : new CryptoApi[]{backend(), reference()}) {
       for (Object[] c : cases) {
+        if (CurveOIDs.sm2p256v1.equals(c[0]) && !supportsSm()) {
+          continue;
+        }
         KeyPairGenerator kpGen = keyGen.newKeyPairGenerator("EC");
-        kpGen.initialize(new ECGenParameterSpec(((Asn1Oid) c[0]).getId()), RND);
+        kpGen.initialize(new ECGenParameterSpec(((Asn1Oid) c[0]).getId()), rnd());
         KeyPair kp = kpGen.generateKeyPair();
         for (String alg : (String[]) c[1]) {
+          if (alg.startsWith("SHAKE") && !supportsEcdsaShake()) {
+            continue;
+          }
           assertCrossSignVerify(alg, kp, keyGen);
         }
       }
@@ -324,7 +380,7 @@ public abstract class CryptoApiCrossTest {
     for (CryptoApi keyGen : new CryptoApi[]{backend(), reference()}) {
       for (MldsaVariant variant : MldsaVariant.values()) {
         String alg = "ML-DSA-" + variant.name().substring("ml_dsa_".length());
-        KeyPair kp = keyGen.generateKeyPair(variant, RND);
+        KeyPair kp = keyGen.generateKeyPair(variant);
         assertCrossSignVerify(alg, kp, keyGen);
         assertCrossSignVerify("ML-DSA", kp, keyGen);
       }
@@ -338,7 +394,7 @@ public abstract class CryptoApiCrossTest {
     for (CryptoApi keyGen : new CryptoApi[]{backend(), reference()}) {
       for (MldsaVariant variant : MldsaVariant.values()) {
         String alg = "ML-DSA-" + variant.name().substring("ml_dsa_".length());
-        KeyPair kp = keyGen.generateKeyPair(variant, RND);
+        KeyPair kp = keyGen.generateKeyPair(variant);
         PrivateKeyInfo skInfo = PrivateKeyInfo.fromEncoded(kp.getPrivate().getEncoded());
 
         for (CryptoApi[] pair : pairs()) {
@@ -375,14 +431,14 @@ public abstract class CryptoApiCrossTest {
   public void testPqcSeedExpansion() {
     Assume.assumeTrue("ML-DSA / ML-KEM not supported", supportsMldsa() && supportsMlkem());
     byte[] seed = new byte[32];
-    RND.nextBytes(seed);
+    rnd().nextBytes(seed);
     for (MldsaVariant variant : MldsaVariant.values()) {
       Assert.assertArrayEquals(variant.name(), backend().expandMldsaSeed(variant, seed),
           reference().expandMldsaSeed(variant, seed));
     }
 
     seed = new byte[64];
-    RND.nextBytes(seed);
+    rnd().nextBytes(seed);
     for (MlkemVariant variant : MlkemVariant.values()) {
       Assert.assertArrayEquals(variant.name(), backend().expandMlkemSeed(variant, seed),
           reference().expandMlkemSeed(variant, seed));
@@ -394,7 +450,7 @@ public abstract class CryptoApiCrossTest {
     Assume.assumeTrue("ML-KEM not supported", supportsMlkem());
     for (MlkemVariant variant : MlkemVariant.values()) {
       for (CryptoApi keyGen : new CryptoApi[]{backend(), reference()}) {
-        KeyPair kp = keyGen.generateKeyPair(variant, RND);
+        KeyPair kp = keyGen.generateKeyPair(variant);
         byte[] rawPk = SubjectPublicKeyInfo.fromEncoded(kp.getPublic().getEncoded())
             .subjectPublicKey();
         MlkemPrivateKey sk = MlkemPrivateKey.fromEncoded(
@@ -407,7 +463,7 @@ public abstract class CryptoApiCrossTest {
         }
 
         for (CryptoApi[] pair : pairs()) {
-          SecretWithEncap encap = pair[0].encapsulateKey(variant, rawPk, RND);
+          SecretWithEncap encap = pair[0].encapsulateKey(variant, rawPk);
           String desc = variant + ", " + keyGen.name() + " key, " + pair[0].name() + " -> "
               + pair[1].name();
           if (seed != null) {
@@ -423,18 +479,19 @@ public abstract class CryptoApiCrossTest {
 
   @Test
   public void testXdh() {
+    Assume.assumeTrue("X25519 and X448 not supported", supportsXdh());
     CryptoApi a = backend();
     CryptoApi b = reference();
     for (int i = 0; i < 5; i++) {
-      byte[] sk1 = b.generateX25519PrivateKey(RND);
-      byte[] sk2 = a.generateX25519PrivateKey(RND);
+      byte[] sk1 = b.generateX25519PrivateKey();
+      byte[] sk2 = a.generateX25519PrivateKey();
       Assert.assertArrayEquals(a.generateX25519PublicKey(sk1), b.generateX25519PublicKey(sk1));
       Assert.assertArrayEquals(
           a.calculateX25519Agreement(sk2, b.generateX25519PublicKey(sk1)),
           b.calculateX25519Agreement(sk1, a.generateX25519PublicKey(sk2)));
 
-      sk1 = b.generateX448PrivateKey(RND);
-      sk2 = a.generateX448PrivateKey(RND);
+      sk1 = b.generateX448PrivateKey();
+      sk2 = a.generateX448PrivateKey();
       Assert.assertArrayEquals(a.generateX448PublicKey(sk1), b.generateX448PublicKey(sk1));
       Assert.assertArrayEquals(
           a.calculateX448Agreement(sk2, b.generateX448PublicKey(sk1)),
@@ -444,7 +501,7 @@ public abstract class CryptoApiCrossTest {
 
   @Test
   public void testXdhKeys() throws Exception {
-    Assume.assumeTrue("XDH keys not supported", supportsEdDsa());
+    Assume.assumeTrue("XDH keys not supported", supportsEdDsa() && supportsXdh());
     for (CryptoApi[] pair : pairs()) {
       for (String alg : new String[]{"X25519", "X448"}) {
         KeyPair kp = pair[0].newKeyPairGenerator(alg).generateKeyPair();
@@ -463,7 +520,8 @@ public abstract class CryptoApiCrossTest {
    * Converts the key pair to the keys of both backends, signs with each backend and verifies
    * with the other one.
    */
-  private void assertCrossSignVerify(String alg, KeyPair kp, CryptoApi keyGen) throws Exception {
+  protected void assertCrossSignVerify(String alg, KeyPair kp, CryptoApi keyGen)
+      throws Exception {
     SubjectPublicKeyInfo pkInfo = SubjectPublicKeyInfo.fromEncoded(kp.getPublic().getEncoded());
     PrivateKeyInfo skInfo = PrivateKeyInfo.fromEncoded(kp.getPrivate().getEncoded());
 
@@ -479,10 +537,10 @@ public abstract class CryptoApiCrossTest {
    * Signs the data. The context is set after initSign, as required by
    * {@link CryptoApi#setContext}.
    */
-  private static byte[] sign(CryptoApi api, String alg, PrivateKey key, byte[] ctx)
+  private byte[] sign(CryptoApi api, String alg, PrivateKey key, byte[] ctx)
       throws Exception {
     Signature sig = api.newSignature(alg);
-    sig.initSign(key, RND);
+    sig.initSign(key, rnd());
     if (ctx != null) {
       api.setContext(sig, ctx);
     }

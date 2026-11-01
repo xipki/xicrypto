@@ -83,7 +83,7 @@ public class TestHSMs {
       speedThreads = (ivalue == null) ? 2 : ivalue;
 
       String str = speedMap.getString("duration");
-      speedDuration = (str == null) ? "3s" : str;
+      speedDuration = (str == null) ? "1s" : str;
 
       speedHsmName = speedMap.getNnString("module");
 

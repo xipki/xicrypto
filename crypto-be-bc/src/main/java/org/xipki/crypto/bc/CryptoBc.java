@@ -4,6 +4,7 @@
 package org.xipki.crypto.bc;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.SecretWithEncapsulation;
 import org.bouncycastle.crypto.digests.SHA256Digest;
@@ -78,16 +79,6 @@ public class CryptoBc implements CryptoApi {
 
     if (rnd == null) {
       CryptoServicesRegistrar.setSecureRandom(new SecureRandom());
-    }
-  }
-
-  @Override
-  public KeyStore newKeyStore(String algorithm)
-      throws KeyStoreException, NoSuchProviderException {
-    try {
-      return KeyStore.getInstance(algorithm, PROVIDER);
-    } catch (KeyStoreException e) {
-      return KeyStore.getInstance(algorithm);
     }
   }
 
@@ -248,22 +239,22 @@ public class CryptoBc implements CryptoApi {
   }
 
   @Override
-  public SecureRandom getSecureRandom(SecureRandom random) {
-    return CryptoServicesRegistrar.getSecureRandom(random);
+  public SecureRandom getSecureRandom() {
+    return CryptoServicesRegistrar.getSecureRandom();
   }
 
   @Override
   public X9ECParameters getByOID(Asn1Oid oid) {
     org.bouncycastle.asn1.x9.X9ECParameters x =
-        org.bouncycastle.asn1.x9.ECNamedCurveTable.getByOID(
+        ECNamedCurveTable.getByOID(
             ASN1ObjectIdentifier.getInstance(oid.getEncoded(Asn1Encoding.DER)));
     return (x == null) ? null : new X9ECParametersW(x);
   }
 
   @Override
-  public byte[] generateX25519PrivateKey(SecureRandom rnd) {
+  public byte[] generateX25519PrivateKey() {
     byte[] k = new byte[32];
-    X25519.generatePrivateKey(rnd, k);
+    X25519.generatePrivateKey(getSecureRandom(), k);
     return k;
   }
 
@@ -282,9 +273,9 @@ public class CryptoBc implements CryptoApi {
   }
 
   @Override
-  public byte[] generateX448PrivateKey(SecureRandom rnd) {
+  public byte[] generateX448PrivateKey() {
     byte[] k = new byte[56];
-    X448.generatePrivateKey(rnd, k);
+    X448.generatePrivateKey(getSecureRandom(), k);
     return k;
   }
 
@@ -305,12 +296,10 @@ public class CryptoBc implements CryptoApi {
   /**
    * Generate MLDSA keypair.
    * @param variant the ML-DSA variant.
-   * @param random may be null
    * @return the generated keypair
    */
   @Override
-  public KeyPair generateKeyPair(MldsaVariant variant, SecureRandom random)
-      throws NoSuchAlgorithmException {
+  public KeyPair generateKeyPair(MldsaVariant variant) throws NoSuchAlgorithmException {
     AlgorithmParameterSpec spec;
     switch (variant) {
       case ml_dsa_44:
@@ -325,18 +314,16 @@ public class CryptoBc implements CryptoApi {
         break;
     }
 
-    return generateKeyPair("ML-DSA", spec, random);
+    return generateKeyPair("ML-DSA", spec);
   }
 
   /**
    * Generate MLKEM keypair.
    * @param variant the ML-KEM variant.
-   * @param random may be null
    * @return the generated keypair
    */
   @Override
-  public KeyPair generateKeyPair(MlkemVariant variant, SecureRandom random)
-      throws NoSuchAlgorithmException {
+  public KeyPair generateKeyPair(MlkemVariant variant) throws NoSuchAlgorithmException {
     AlgorithmParameterSpec spec;
     switch (variant) {
       case ml_kem_512:
@@ -350,11 +337,10 @@ public class CryptoBc implements CryptoApi {
         spec = MLKEMParameterSpec.ml_kem_1024;
     }
 
-    return generateKeyPair("ML-KEM", spec, random);
+    return generateKeyPair("ML-KEM", spec);
   }
 
-  private static KeyPair generateKeyPair(
-      String algo, AlgorithmParameterSpec spec, SecureRandom random)
+  private static KeyPair generateKeyPair(String algo, AlgorithmParameterSpec spec)
       throws NoSuchAlgorithmException {
     // the provider must be given: since JDK 24, the JDK provides ML-DSA and ML-KEM as well, but
     // does not accept the parameter specs of BouncyCastle.
@@ -366,11 +352,7 @@ public class CryptoBc implements CryptoApi {
     }
 
     try {
-      if (random == null) {
-        kpGen.initialize(spec);
-      } else {
-        kpGen.initialize(spec, random);
-      }
+      kpGen.initialize(spec, CryptoServicesRegistrar.getSecureRandom());
     } catch (InvalidAlgorithmParameterException e) {
       throw new NoSuchAlgorithmException(e.getMessage(), e);
     }
@@ -379,8 +361,7 @@ public class CryptoBc implements CryptoApi {
   }
 
   @Override
-  public SecretWithEncap encapsulateKey(
-      MlkemVariant pqcVariant, byte[] publicKeyData, SecureRandom rnd) {
+  public SecretWithEncap encapsulateKey(MlkemVariant pqcVariant, byte[] publicKeyData) {
     MLKEMParameters params =
           pqcVariant == MlkemVariant.ml_kem_512 ? MLKEMParameters.ml_kem_512
         : pqcVariant == MlkemVariant.ml_kem_768 ? MLKEMParameters.ml_kem_768
@@ -390,7 +371,7 @@ public class CryptoBc implements CryptoApi {
       throw new IllegalArgumentException("invalid pqcVariant " + pqcVariant);
     }
 
-    MLKEMGenerator gen = new MLKEMGenerator(rnd);
+    MLKEMGenerator gen = new MLKEMGenerator(getSecureRandom());
     MLKEMPublicKeyParameters pkParams = new MLKEMPublicKeyParameters(params, publicKeyData);
     return new SecretWithEncapsulationW(gen.generateEncapsulated(pkParams));
   }

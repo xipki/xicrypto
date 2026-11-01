@@ -19,11 +19,24 @@
     </file>
     <file>
       <source>src/assembly/licenses/bouncycastle-LICENSE.txt</source>
-      <outputDirectory>crypto-be-bcfips/crypto</outputDirectory>
+      <outputDirectory>crypto-be-bc-fips/crypto</outputDirectory>
       <fileMode>0644</fileMode>
     </file>
   </files>
   <dependencySets>
+    <!-- crypto-be-jdk (requires JDK 25+): own jar, named groupId.artifactId-version.jar; no
+         third-party jars -->
+    <dependencySet>
+      <outputDirectory>crypto-be-jdk/crypto</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
+      <includes>
+        <include>org.xipki.crypto:crypto-be-jdk</include>
+      </includes>
+      <outputFileNameMapping>${artifact.groupId}.${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+    </dependencySet>
     <!-- crypto-be-bc: own jar, named groupId.artifactId-version.jar -->
     <dependencySet>
       <outputDirectory>crypto-be-bc/crypto</outputDirectory>
@@ -47,28 +60,55 @@
       <fileMode>0644</fileMode>
       <directoryMode>0755</directoryMode>
     </dependencySet>
-    <!-- crypto-be-bcfips: own jars, named groupId.artifactId-version.jar -->
+    <!-- crypto-be-bc-fips: own jars, named groupId.artifactId-version.jar -->
     <dependencySet>
-      <outputDirectory>crypto-be-bcfips/crypto</outputDirectory>
+      <outputDirectory>crypto-be-bc-fips/crypto</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveFiltering>false</useTransitiveFiltering>
       <includes>
-        <include>org.xipki.crypto:crypto-extra</include>
-        <include>org.xipki.crypto:crypto-be-bcfips</include>
+        <include>org.xipki.crypto:crypto-be-bc-fips</include>
       </includes>
       <outputFileNameMapping>${artifact.groupId}.${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
       <fileMode>0644</fileMode>
       <directoryMode>0755</directoryMode>
     </dependencySet>
-    <!-- crypto-be-bcfips: third-party -->
+    <!-- crypto-be-bc-fips: third-party -->
     <dependencySet>
-      <outputDirectory>crypto-be-bcfips/crypto</outputDirectory>
+      <outputDirectory>crypto-be-bc-fips/crypto</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveFiltering>false</useTransitiveFiltering>
       <includes>
         <include>org.bouncycastle:bc-fips</include>
         <include>org.bouncycastle:bcpqc-fips</include>
       </includes>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+    </dependencySet>
+    <!-- crypto-be-openssl (requires JDK 25+): own jars (with the shared crypto-openssl), named
+         groupId.artifactId-version.jar. libcrypto of OpenSSL 4.1+ is not included, it is the
+         one of the system. -->
+    <dependencySet>
+      <outputDirectory>crypto-be-openssl/crypto</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
+      <includes>
+        <include>org.xipki.crypto:crypto-openssl</include>
+        <include>org.xipki.crypto:crypto-be-openssl</include>
+      </includes>
+      <outputFileNameMapping>${artifact.groupId}.${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+    </dependencySet>
+    <!-- crypto-be-openssl-fips: as crypto-be-openssl -->
+    <dependencySet>
+      <outputDirectory>crypto-be-openssl-fips/crypto</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveFiltering>false</useTransitiveFiltering>
+      <includes>
+        <include>org.xipki.crypto:crypto-openssl</include>
+        <include>org.xipki.crypto:crypto-be-openssl-fips</include>
+      </includes>
+      <outputFileNameMapping>${artifact.groupId}.${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
       <fileMode>0644</fileMode>
       <directoryMode>0755</directoryMode>
     </dependencySet>

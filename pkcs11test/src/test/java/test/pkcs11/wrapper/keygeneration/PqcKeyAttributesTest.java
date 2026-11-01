@@ -254,7 +254,7 @@ public class PqcKeyAttributesTest {
         Assert.assertEquals(p + ": length of private CKA_VALUE", p.dkSize, sk.value().length);
 
         // ek belongs to the seed and to dk
-        SecretWithEncap se = cryptoApi.encapsulateKey(p.variant, ek, random);
+        SecretWithEncap se = cryptoApi.encapsulateKey(p.variant, ek);
         Assert.assertArrayEquals(p + ": decapsulate with CKA_SEED", se.secret(),
             cryptoApi.decapsulateKey(p.variant, sk.seed(), se.encap()));
         Assert.assertArrayEquals(p + ": decapsulate with CKA_VALUE", se.secret(),
@@ -269,7 +269,7 @@ public class PqcKeyAttributesTest {
      */
     private void testImportedMldsa(Mldsa p) throws Exception {
       assertSupport(CKM_ML_DSA, CKF_SIGN);
-      KeyPair kp = cryptoApi.generateKeyPair(p.variant, random);
+      KeyPair kp = cryptoApi.generateKeyPair(p.variant);
       byte[] seed = PqcPrivateKey.fromEncoded(
           PrivateKeyInfo.fromPrivateKey(kp.getPrivate()).privateKey()).seed();
       byte[] expanded = expandMldsa(p, seed);
@@ -306,7 +306,7 @@ public class PqcKeyAttributesTest {
 
     private void testImportedMlkem(Mlkem p) throws Exception {
       assertSupport(CKM_ML_KEM, CKF_DECAPSULATE);
-      KeyPair kp = cryptoApi.generateKeyPair(p.variant, random);
+      KeyPair kp = cryptoApi.generateKeyPair(p.variant);
       PrivateKeyInfo skInfo = PrivateKeyInfo.fromPrivateKey(kp.getPrivate());
       byte[] seed = PqcPrivateKey.fromEncoded(skInfo.privateKey()).seed();
       byte[] pkcs8 = new PrivateKeyInfo(skInfo.getPrivateKeyAlgorithm(),

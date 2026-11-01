@@ -7,6 +7,7 @@ import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.crypto.MlkemPrivateKey;
 import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.crypto.core.KeySpec;
 import org.xipki.codec.util.Args;
@@ -123,7 +124,7 @@ public class CompositeMLKEMPrivateKey implements PrivateKey {
     }
 
     try {
-      this.keyValue = org.xipki.codec.util.Arrays.concatenate(
+      this.keyValue = XiArrays.concatenate(
                         KeyInfoUtil.getPqcSeed(pqcSkInfo), tradSk);
     } catch (CodecException e) {
       throw new IllegalArgumentException(e);

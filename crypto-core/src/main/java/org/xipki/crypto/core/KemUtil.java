@@ -25,7 +25,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
-import java.security.SecureRandom;
 
 /**
  * KEMUtil.
@@ -41,18 +40,17 @@ public class KemUtil {
   // encryptedMacKey = enc_aesGcm(encapKey.secret, macKey)
   // result          = (encapKey.encapsulation, encryptedMacKey)
   public static KemEncapKey generateKemEncapKey(
-      SubjectPublicKeyInfo spki, SecretKeyWithAlias masterKey, SecureRandom rnd)
-      throws XiSecurityException {
+      SubjectPublicKeyInfo spki, SecretKeyWithAlias masterKey) throws XiSecurityException {
     byte[] rawPkData = spki.subjectPublicKey();
 
     // derive the MAC key
     byte[] macKey = hmacDerive(masterKey.secretKey(), 32,
         "XIPKI-KEM".getBytes(StandardCharsets.US_ASCII), rawPkData);
-    return new KemEncapKey(masterKey.alias(), kemEncryptSecret(spki, macKey, rnd));
+    return new KemEncapKey(masterKey.alias(), kemEncryptSecret(spki, macKey));
   }
 
-  public static KemEncapsulation kemEncryptSecret(
-      SubjectPublicKeyInfo spki, byte[] secret, SecureRandom rnd) throws XiSecurityException {
+  public static KemEncapsulation kemEncryptSecret(SubjectPublicKeyInfo spki, byte[] secret)
+      throws XiSecurityException {
     AlgorithmIdentifier algId = spki.getAlgorithm();
     Asn1Oid algOid = algId.getAlgorithm();
 
@@ -64,8 +62,7 @@ public class KemUtil {
         AlgorithmOIDs.id_ml_kem_1024.equals(algOid)) {
       alg = KemEncapsulation.ALG_KMAC_MLKEM_HMAC;
 
-      skEncap = cryptoApi.encapsulateKey(
-          MlkemVariant.fromOid(algOid), spki.subjectPublicKey(), rnd);
+      skEncap = cryptoApi.encapsulateKey(MlkemVariant.fromOid(algOid), spki.subjectPublicKey());
     } else {
       CompositeKemSuite suite = CompositeKemSuite.getAlgoSuite(algId);
       if (suite == null) {
@@ -74,7 +71,7 @@ public class KemUtil {
       }
 
       alg = KemEncapsulation.ALG_KMAC_COMPOSITE_MLKEM_HMAC;
-      skEncap = CompositeKemUtil.encap(suite, spki.subjectPublicKey(), rnd);
+      skEncap = CompositeKemUtil.encap(suite, spki.subjectPublicKey());
     }
 
     try {
@@ -90,10 +87,9 @@ public class KemUtil {
     }
   }
 
-  public static SecretWithEncap encapsulateKey(
-      KeySpec keySpec, byte[] publicKeyData, SecureRandom rnd) {
+  public static SecretWithEncap encapsulateKey(KeySpec keySpec, byte[] publicKeyData) {
     MlkemVariant pqcVariant = getMlkemVariant(keySpec);
-    return cryptoApi.encapsulateKey(pqcVariant, publicKeyData, rnd);
+    return cryptoApi.encapsulateKey(pqcVariant, publicKeyData);
   }
 
   public static MlkemVariant getMlkemVariant(KeySpec keySpec) {

@@ -5,13 +5,13 @@ package test.pkcs11.speed.keygeneration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xipki.crypto.api.CryptoApiFactory;
 import org.xipki.pkcs11.wrapper.PKCS11KeyId;
 import org.xipki.pkcs11.wrapper.spec.PKCS11SecretKeySpec;
 import org.xipki.pkcs11.wrapper.type.CkMechanism;
 import test.pkcs11.speed.Pkcs11Executor;
 import test.pkcs11.wrapper.TestHSMs;
 
-import java.util.Random;
 
 import static org.xipki.pkcs11.wrapper.PKCS11T.ckmCodeToName;
 
@@ -41,7 +41,7 @@ public abstract class KeyGenExecutor extends Pkcs11Executor {
               .token(inToken).sensitive(true).encrypt(true).decrypt(true);
           if (inToken) {
             byte[] id = new byte[20];
-            new Random().nextBytes(id);
+            CryptoApiFactory.get().getSecureRandom().nextBytes(id);
             secretKeyTemplate.id(id);
           }
 

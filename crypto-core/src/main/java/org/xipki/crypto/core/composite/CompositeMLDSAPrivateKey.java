@@ -7,6 +7,7 @@ import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.crypto.MldsaPrivateKey;
 import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.crypto.core.KeySpec;
 import org.xipki.codec.util.Args;
@@ -117,7 +118,7 @@ public class CompositeMLDSAPrivateKey implements PrivateKey {
       tradSk = Arrays.copyOfRange(tradSk, 2, tradSk.length);
     }
 
-    this.keyValue = org.xipki.codec.util.Arrays.concatenate(
+    this.keyValue = XiArrays.concatenate(
                       KeyInfoUtil.getPqcSeed(pqcSkInfo), tradSk);
   }
 

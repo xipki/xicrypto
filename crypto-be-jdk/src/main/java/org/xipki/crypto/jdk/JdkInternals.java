@@ -32,8 +32,6 @@ final class JdkInternals {
    *
    * TODO: remove this class, and call the public class and methods once MLDSA with
    *   context is supported in the future JDK version.
-   *
-   * @author Lijun Liao (xipki)
    */
   static final class Mldsa {
 
@@ -201,8 +199,6 @@ final class JdkInternals {
    * <p>
    * The package com.sun.crypto.provider is not exported, the JVM option
    * {@value #ADD_EXPORTS} is required.
-   *
-   * @author Lijun Liao (xipki)
    */
   static final class Mlkem {
 

@@ -49,7 +49,6 @@ import java.security.spec.KeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.logging.LogManager;
 
 import static org.xipki.pkcs11.wrapper.PKCS11T.*;
@@ -60,9 +59,9 @@ import static org.xipki.pkcs11.wrapper.PKCS11T.*;
  */
 public abstract class TestBase {
 
-  protected static final SecureRandom random = new SecureRandom();
-
   protected static final CryptoApi cryptoApi = CryptoApiFactory.get();
+
+  protected static final SecureRandom random = cryptoApi.getSecureRandom();
 
   protected final Logger LOG = LoggerFactory.getLogger(getClass());
 
@@ -133,7 +132,7 @@ public abstract class TestBase {
   protected PKCS11KeyId generateKeypair(PKCS11KeyPairType keyPairType, boolean inToken)
       throws TokenException {
     byte[] id = new byte[20];
-    new Random().nextBytes(id);
+    random.nextBytes(id);
 
     PKCS11KeyPairSpec template = new PKCS11KeyPairSpec()
         .token(inToken).id(id)

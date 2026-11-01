@@ -29,13 +29,11 @@ import java.security.spec.InvalidKeySpecException;
 public interface CryptoApi {
 
   /**
-   * Returns the short name of this backend, e.g. "bc", "bcfips" or "jdk". It is used for the
-   * selection via the system property {@link CryptoApiFactory#PROP_BACKEND}.
+   * Returns the short name of this backend, e.g. "bc", "bc-fips", "jdk" or "openssl-fips". It is
+   * used for the selection via the system property {@link CryptoApiFactory#PROP_BACKEND}.
    * @return the short name of this backend.
    */
   String name();
-
-  KeyStore newKeyStore(String algorithm) throws KeyStoreException, NoSuchProviderException;
 
   KeyAgreement newKeyAgreement(String algorithm)
       throws NoSuchAlgorithmException, NoSuchProviderException;
@@ -123,7 +121,7 @@ public interface CryptoApi {
 
   /**
    * Sets the context string of a signature (e.g. ML-DSA). It must be called after
-   * {@link Signature#initSign} or {@link Signature#initVerify}: some backends (e.g. BC-FIPS) do
+   * Signature#initSign or Signature#initVerify: some backends (e.g. BC-FIPS) do
    * not accept the context before the initialization.
    * @param sig the signature.
    * @param context the context. Null or empty means no context.
@@ -152,7 +150,12 @@ public interface CryptoApi {
    */
   byte[] hkdfSha256Derive(byte[] ikm, byte[] salt, byte[] info, int outputKeyLen);
 
-  SecureRandom getSecureRandom(SecureRandom random);
+  /**
+   * Returns the random number generator of this backend, e.g. the DRBG of OpenSSL or the
+   * approved DRBG of BC-FIPS.
+   * @return the random number generator.
+   */
+  SecureRandom getSecureRandom();
 
   /**
    * Returns the parameters of the named Weierstrass curve.
@@ -161,13 +164,13 @@ public interface CryptoApi {
    */
   X9ECParameters getByOID(Asn1Oid oid);
 
-  byte[] generateX25519PrivateKey(SecureRandom rnd);
+  byte[] generateX25519PrivateKey();
 
   byte[] generateX25519PublicKey(byte[] sk);
 
   byte[] calculateX25519Agreement(byte[] sk, byte[] peerPk);
 
-  byte[] generateX448PrivateKey(SecureRandom rnd);
+  byte[] generateX448PrivateKey();
 
   byte[] generateX448PublicKey(byte[] sk);
 
@@ -176,26 +179,20 @@ public interface CryptoApi {
   /**
    * Generate MLDSA keypair.
    * @param variant the ML-DSA variant.
-   * @param random may be null
    * @return the generated keypair
    */
-  KeyPair generateKeyPair(MldsaVariant variant, SecureRandom random)
-      throws NoSuchAlgorithmException;
+  KeyPair generateKeyPair(MldsaVariant variant) throws NoSuchAlgorithmException;
 
   /**
    * Generate MLKEM keypair.
    * @param variant the ML-KEM variant.
-   * @param random may be null
    * @return the generated keypair
    */
-  KeyPair generateKeyPair(MlkemVariant variant, SecureRandom random)
-      throws NoSuchAlgorithmException;
+  KeyPair generateKeyPair(MlkemVariant variant) throws NoSuchAlgorithmException;
 
-  SecretWithEncap encapsulateKey(
-      MlkemVariant pqcVariant, byte[] publicKeyData, SecureRandom rnd);
+  SecretWithEncap encapsulateKey(MlkemVariant pqcVariant, byte[] publicKeyData);
 
-  byte[] decapsulateKey(
-      MlkemVariant pqcVariant, byte[] privateKeyValue, byte[] encapsulatedKey);
+  byte[] decapsulateKey(MlkemVariant pqcVariant, byte[] privateKeyValue, byte[] encapsulatedKey);
 
   /**
    * Computes the ML-DSA private key sk (ML-DSA.KeyGen_internal of FIPS 204) from the seed.

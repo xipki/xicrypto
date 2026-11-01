@@ -24,6 +24,7 @@ import org.xipki.pkcs11.xihsm.util.ObjectInitMethod;
 import org.xipki.pkcs11.xihsm.util.Origin;
 import org.xipki.pkcs11.xihsm.util.XiConstants;
 
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.util.Arrays;
@@ -55,7 +56,7 @@ public class XiMLDSAPrivateKey extends XiPrivateKey {
    */
   private final byte[] value;
 
-  private final java.security.PrivateKey jceKey;
+  private final PrivateKey jceKey;
 
   /**
    * Constructor.

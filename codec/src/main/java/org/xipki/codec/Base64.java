@@ -1,6 +1,8 @@
-// #THIRDPARTY#
-// original license BSD.
-
+// Copyright (c) 2004, Mikael Grev, MiG InfoCom AB. (base64@miginfocom.com)
+// License BSD
+//
+// Copyright (c) 2013-2026 xipki. All rights reserved.
+// License Apache License 2.0
 package org.xipki.codec;
 
 import org.xipki.codec.util.Args;
@@ -10,7 +12,7 @@ import java.util.Arrays;
 /**
  * Base64.
  *
- * @author original author
+ * @author Mikael Grev
  * @author Lijun Liao (xipki)
  */
 public abstract class Base64 {
@@ -45,6 +47,18 @@ public abstract class Base64 {
 
     IA['-'] = 62;
     IA['_'] = 63;
+  }
+
+  /**
+   * The alphabets accepted by the decoders.
+   */
+  public enum DecodeOption {
+    /** Only the alphabet of BASE64 (RFC 4648, section 4): '+' and '/'. */
+    BASE64_ONLY,
+    /** Only the alphabet of BASE64URL (RFC 4648, section 5): '-' and '_'. */
+    BASE64URL_ONLY,
+    /** Both alphabets. */
+    ANY
   }
 
   public static Encoder getEncoder() {
@@ -129,13 +143,22 @@ public abstract class Base64 {
   }
 
   /**
+   * Same as {@link #decode(char[], DecodeOption)} with {@link DecodeOption#ANY}: both
+   * alphabets, BASE64 and BASE64URL, are accepted.
+   */
+  public static byte[] decode(char[] sArr) {
+    return decode(sArr, DecodeOption.ANY);
+  }
+
+  /**
    * Decodes a BASE64 / BASE64-URL encoded char array. Whitespaces (e.g. line
    * separators) are ignored, other invalid characters are rejected.
    * @param sArr The source array. <code>null</code> or length 0 will return an
    *             empty array.
+   * @param option the accepted alphabet(s).
    * @return The decoded array of bytes. Maybe of length 0.
    */
-  public static byte[] decode(char[] sArr) {
+  public static byte[] decode(char[] sArr, DecodeOption option) {
     // Check special case
     int sLen = sArr != null ? sArr.length : 0;
     if (sLen == 0) {
@@ -149,7 +172,7 @@ public abstract class Base64 {
       char c = sArr[i];
       if (c == '=') {
         pad++;
-      } else if (c < 256 && IA[c] >= 0) {
+      } else if (isValid(c, option)) {
         if (pad > 0) {
           throw new IllegalArgumentException("invalid Base64: '=' within the data");
         }
@@ -186,6 +209,14 @@ public abstract class Base64 {
   }
 
   /**
+   * Same as {@link #decodeFast(char[], DecodeOption)} with {@link DecodeOption#ANY}: both
+   * alphabets, BASE64 and BASE64URL, are accepted.
+   */
+  public static byte[] decodeFast(char[] sArr) {
+    return decodeFast(sArr, DecodeOption.ANY);
+  }
+
+  /**
    * Decodes a BASE64 /BASE64-URL encoded char array that is known to be reasonably well formatted.
    * The method is about twice as fast as {@link #decode(char[])}. The preconditions are:<br>
    * + Whitespaces at the beginning and end are ignored.<br>
@@ -196,9 +227,10 @@ public abstract class Base64 {
    * @param sArr
    *          The source array. Length 0 will return an empty array. <code>null</code> will throw
    *          an exception.
+   * @param option the accepted alphabet(s).
    * @return The decoded array of bytes. May be of length 0.
    */
-  public static byte[] decodeFast(char[] sArr) {
+  public static byte[] decodeFast(char[] sArr, DecodeOption option) {
     int sIx = 0;
     int eIx = sArr.length - 1;    // Start and end index after trimming.
 
@@ -220,10 +252,10 @@ public abstract class Base64 {
 
     for (int i = sIx; i <= eIx; i++) {
       char c = sArr[i];
-      if (c == '=' || c >= 256 || IA[c] < 0) {
+      if (c == '=' || !isValid(c, option)) {
         if (isWhitespace(c)) {
           // e.g. with line separators: use the decoder which ignores the whitespaces.
-          return decode(sArr);
+          return decode(sArr, option);
         }
         throw new IllegalArgumentException("invalid Base64 character at index " + i);
       }
@@ -260,6 +292,14 @@ public abstract class Base64 {
   }
 
   /**
+   * Same as {@link #decode(String, DecodeOption)} with {@link DecodeOption#ANY}: both
+   * alphabets, BASE64 and BASE64URL, are accepted.
+   */
+  public static byte[] decode(String str) {
+    return decode(str, DecodeOption.ANY);
+  }
+
+  /**
    * Decodes a BASE64 / BASE64-URL encoded <code>String</code>. Whitespaces (e.g. line
    * separators) are ignored, other invalid characters are rejected.<br>
    * <b>Note!</b> It can be up to about 2x the speed to call
@@ -267,12 +307,21 @@ public abstract class Base64 {
    * This version will use <code>str.charAt(i)</code> to iterate the string.
    * @param str
    *          The source string. <code>null</code> or length 0 will return an empty array.
+   * @param option the accepted alphabet(s).
    * @return The decoded array of bytes. May be of length 0.
    * @throws IllegalArgumentException
    *         If the input contains invalid characters, or has invalid length or padding.
    */
-  public static byte[] decode(String str) {    // Check special case
-    return str == null || str.isEmpty() ? new byte[0] : decode(str.toCharArray());
+  public static byte[] decode(String str, DecodeOption option) {
+    return str == null || str.isEmpty() ? new byte[0] : decode(str.toCharArray(), option);
+  }
+
+  /**
+   * Same as {@link #decodeFast(String, DecodeOption)} with {@link DecodeOption#ANY}: both
+   * alphabets, BASE64 and BASE64URL, are accepted.
+   */
+  public static byte[] decodeFast(String s) {
+    return decodeFast(s, DecodeOption.ANY);
   }
 
   /**
@@ -286,10 +335,19 @@ public abstract class Base64 {
    * @param s
    *          The source string. Length 0 will return an empty array. <code>null</code> will
    *          throw an exception.
+   * @param option the accepted alphabet(s).
    * @return The decoded array of bytes. May be of length 0.
    */
-  public static byte[] decodeFast(String s) {
-    return s == null || s.isEmpty() ? new byte[0] : decodeFast(s.toCharArray());
+  public static byte[] decodeFast(String s, DecodeOption option) {
+    return s == null || s.isEmpty() ? new byte[0] : decodeFast(s.toCharArray(), option);
+  }
+
+  /**
+   * Same as {@link #decode(byte[], DecodeOption)} with {@link DecodeOption#ANY}: both
+   * alphabets, BASE64 and BASE64URL, are accepted.
+   */
+  public static byte[] decode(byte[] sArr) {
+    return decode(sArr, DecodeOption.ANY);
   }
 
   /**
@@ -298,11 +356,12 @@ public abstract class Base64 {
    * @param sArr
    *          The source array. Length 0 will return an empty array. <code>null</code> will throw
    *          an exception.
+   * @param option the accepted alphabet(s).
    * @return The decoded array of bytes. May be of length 0.
    * @throws IllegalArgumentException
    *         If the input contains invalid characters, or has invalid length or padding.
    */
-  public static byte[] decode(byte[] sArr) {
+  public static byte[] decode(byte[] sArr, DecodeOption option) {
     // Check special cases
     int sLen = sArr.length;
     if (sLen == 0) {
@@ -316,7 +375,7 @@ public abstract class Base64 {
       int c = sArr[i] & 0xff;
       if (c == '=') {
         pad++;
-      } else if (IA[c] >= 0) {
+      } else if (isValid(c, option)) {
         if (pad > 0) {
           throw new IllegalArgumentException("invalid Base64: '=' within the data");
         }
@@ -353,6 +412,14 @@ public abstract class Base64 {
   }
 
   /**
+   * Same as {@link #decodeFast(byte[], DecodeOption)} with {@link DecodeOption#ANY}: both
+   * alphabets, BASE64 and BASE64URL, are accepted.
+   */
+  public static byte[] decodeFast(byte[] sArr) {
+    return decodeFast(sArr, DecodeOption.ANY);
+  }
+
+  /**
    * Decodes a BASE64 / BASE64-URL encoded byte array that is known to be reasonably well formatted.
    * The method is about twice as fast as {@link #decode(byte[])}. The preconditions are:<br>
    * + Whitespaces at the beginning and end are ignored.<br>
@@ -363,9 +430,10 @@ public abstract class Base64 {
    * @param sArr
    *          The source array. Length 0 will return an empty array. <code>null</code> will throw
    *          an exception.
+   * @param option the accepted alphabet(s).
    * @return The decoded array of bytes. May be of length 0.
    */
-  public static byte[] decodeFast(byte[] sArr) {
+  public static byte[] decodeFast(byte[] sArr, DecodeOption option) {
     int sIx = 0;
     int eIx = sArr.length - 1;    // Start and end index after trimming.
 
@@ -387,10 +455,10 @@ public abstract class Base64 {
 
     for (int i = sIx; i <= eIx; i++) {
       int c = sArr[i] & 0xff;
-      if (c == '=' || IA[c] < 0) {
+      if (c == '=' || !isValid(c, option)) {
         if (isWhitespace((char) c)) {
           // e.g. with line separators: use the decoder which ignores the whitespaces.
-          return decode(sArr);
+          return decode(sArr, option);
         }
         throw new IllegalArgumentException("invalid Base64 character at index " + i);
       }
@@ -424,6 +492,24 @@ public abstract class Base64 {
     finalBytes(dArr, d, acc, j);
 
     return dArr;
+  }
+
+  /**
+   * Returns whether the character is a data character (not '=') of the accepted alphabet(s).
+   */
+  private static boolean isValid(int c, DecodeOption option) {
+    if (c >= 256 || c == '=' || IA[c] < 0) {
+      return false;
+    }
+
+    switch (Args.notNull(option, "option")) {
+      case BASE64_ONLY:
+        return c != '-' && c != '_';
+      case BASE64URL_ONLY:
+        return c != '+' && c != '/';
+      default:
+        return true;
+    }
   }
 
   private static boolean isWhitespace(char c) {

@@ -11,22 +11,45 @@
   <artifactId>crypto-be-jdk</artifactId>
   <name>XiPKI :: ${project.artifactId}</name>
   <description>
-    Crypto backend using only the providers of the JDK. Compiled with Java 11 (as the other
-    modules), runs on JDK 11+; ML-DSA and ML-KEM require JDK 25+.
+    Crypto backend using only the providers of the JDK. Requires JDK 25+.
   </description>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>25</release>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!-- ML-DSA with context string, and the expanded ML-DSA / ML-KEM private keys
                from the seed, use the internals of the JDK -->
           <argLine>--add-exports java.base/sun.security.provider=ALL-UNNAMED --add-exports java.base/com.sun.crypto.provider=ALL-UNNAMED</argLine>
-          <excludes>
+          <excludes combine.children="append">
             <exclude>**/NoBouncyCastleTest.java</exclude>
+            <exclude>**/SmDisabledTest.java</exclude>
           </excludes>
         </configuration>
         <executions>
+          <!-- runs in its own JVM: the SM algorithms must be disabled before first use -->
+          <execution>
+            <id>sm-disabled</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <excludes combine.self="override"/>
+              <includes>
+                <include>**/SmDisabledTest.java</include>
+              </includes>
+              <systemPropertyVariables>
+                <xipki.crypto.disableSm>true</xipki.crypto.disableSm>
+              </systemPropertyVariables>
+            </configuration>
+          </execution>
           <!-- conformance and routing without BouncyCastle on the classpath -->
           <execution>
             <id>no-bc</id>
@@ -39,6 +62,8 @@
                 <include>**/NoBouncyCastleTest.java</include>
                 <include>**/CryptoJdkTest.java</include>
                 <include>**/EcRoutingTest.java</include>
+                <include>**/WycheproofEcdsaTest.java</include>
+                <include>**/VarTimeMultiplierTest.java</include>
               </includes>
               <classpathDependencyExcludes>
                 <classpathDependencyExclude>org.bouncycastle:bcprov-lts8on</classpathDependencyExclude>
@@ -57,18 +82,13 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>crypto-extra</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>crypto-api</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <!-- tests only: BouncyCastle as reference implementation. The cross tests with crypto-be-bc
-         and crypto-be-bcfips are in those modules. -->
+         and crypto-be-bc-fips are in those modules. -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-lts8on</artifactId>

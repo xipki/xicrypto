@@ -21,7 +21,6 @@ import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Random;
 
 import static org.xipki.pkcs11.wrapper.PKCS11T.CKF_SIGN;
 import static org.xipki.pkcs11.wrapper.PKCS11T.CKK_RSA;
@@ -141,7 +140,7 @@ public class RSAGenerateKeyPairTest {
               : null;
 
       byte[] id = new byte[20];
-      new Random().nextBytes(id);
+      random.nextBytes(id);
 
       // set the general attributes for the public key
       PKCS11KeyPairSpec template = new PKCS11KeyPairSpec()

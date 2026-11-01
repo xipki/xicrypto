@@ -18,7 +18,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -33,8 +32,6 @@ public class EcRoutingTest {
 
   private static final byte[] MSG = "routing".getBytes(StandardCharsets.UTF_8);
 
-  private static final SecureRandom RND = new SecureRandom();
-
   private static final CryptoApi crypto = new CryptoJdk();
 
   @Test
@@ -47,10 +44,9 @@ public class EcRoutingTest {
       assertSignVerify("SHA256WITHECDSA", kp);
     }
 
-    // the other curves: SunEC if it supports the curve (JDK 11 to 15: legacy native library,
-    // e.g. brainpool), otherwise xicrypto
-    for (String curve : new String[]{"brainpoolP256r1", "brainpoolP384r1", "brainpoolP512r1",
-        "1.2.250.1.223.101.256.1"}) {
+    // the other curves: SunEC if it supports the curve, otherwise xicrypto (brainpool is not in
+    // SunEC since JDK 16)
+    for (String curve : new String[]{"brainpoolP256r1", "brainpoolP384r1", "brainpoolP512r1"}) {
       KeyPair kp = keyPair(curve);
       Assert.assertEquals(curve, !sunEcSupports(curve), isXiKey(kp.getPublic()));
       assertSignVerify("SHA256WITHECDSA", kp);
@@ -72,7 +68,7 @@ public class EcRoutingTest {
         kp.getPublic().getEncoded()));
     Assert.assertTrue(pk.getClass().getName().startsWith("sun.security.ec."));
 
-    // the JDK 16+ would parse brainpool keys, but cannot use them; JDK 11 to 15 can use them
+    // SunEC would parse brainpool keys, but cannot use them
     pk = crypto.getPublicKey(SubjectPublicKeyInfo.fromEncoded(resource("brainpoolP256r1.spki")));
     Assert.assertEquals(!sunEcSupports("brainpoolP256r1"), isXiKey(pk));
     PrivateKey sk = crypto.getPrivateKey(PrivateKeyInfo.fromEncoded(
@@ -127,18 +123,18 @@ public class EcRoutingTest {
   }
 
   private static boolean isXiKey(PublicKey pk) {
-    return pk.getClass().getName().startsWith("org.xipki.crypto.extra.");
+    return pk.getClass().getName().startsWith("org.xipki.crypto.jdk.");
   }
 
   private static KeyPair keyPair(String curve) throws Exception {
     KeyPairGenerator kpGen = crypto.newKeyPairGenerator("EC");
-    kpGen.initialize(new ECGenParameterSpec(curve), RND);
+    kpGen.initialize(new ECGenParameterSpec(curve), crypto.getSecureRandom());
     return kpGen.generateKeyPair();
   }
 
   private static void assertSignVerify(String alg, KeyPair kp) throws Exception {
     Signature sig = crypto.newSignature(alg);
-    sig.initSign(kp.getPrivate(), RND);
+    sig.initSign(kp.getPrivate(), crypto.getSecureRandom());
     sig.update(MSG);
     byte[] value = sig.sign();
     Assert.assertTrue(alg, verify(alg, kp.getPublic(), MSG, value));

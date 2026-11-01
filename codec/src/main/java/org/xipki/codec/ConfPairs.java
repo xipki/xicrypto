@@ -355,7 +355,7 @@ public class ConfPairs implements JsonEncodable {
   }
 
   public String toStringOmitSensitive(String... nameKeywords) {
-    return toStringOmitSensitive(java.util.Arrays.asList(nameKeywords), null);
+    return toStringOmitSensitive(Arrays.asList(nameKeywords), null);
   }
 
   public String toStringOmitSensitive(

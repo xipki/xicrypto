@@ -5,12 +5,6 @@
     "order": "fffffffeffffffffffffffffffffffff7203df6b21c6052b53bbf40939d54123",
     "baseX": "32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7"
   },{
-    "oid": "1.2.250.1.223.101.256.1",
-    "names": ["FRP256v1"],
-    "fieldSize": 256,
-    "order": "f1fd178c0b3ad58f10126de8ce42435b53dc67e140d2bf941ffdd459c6d655e1",
-    "baseX": "b6b3d4c356c139eb31183d4749d423958c27d2dcaf98b70164c97a2dd98f5cff"
-  },{
     "oid": "1.2.840.10045.3.1.1",
     "names": ["P-192","prime192v1","secp192r1"],
     "fieldSize": 192,

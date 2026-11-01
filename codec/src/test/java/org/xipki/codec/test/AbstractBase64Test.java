@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Random;
 
 /**
@@ -79,7 +80,7 @@ public abstract class AbstractBase64Test {
       data[i] = (byte) (i * 7);
     }
 
-    String encoded = java.util.Base64.getMimeEncoder(64, new byte[] {'\r', '\n'})
+    String encoded = Base64.getMimeEncoder(64, new byte[] {'\r', '\n'})
         .encodeToString(data) + "\r\n";
     Assert.assertArrayEquals(data, decode(encoded));
     Assert.assertArrayEquals(data, decodeFast(encoded));

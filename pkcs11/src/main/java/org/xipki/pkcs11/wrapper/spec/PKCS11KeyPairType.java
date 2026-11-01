@@ -36,8 +36,6 @@ public interface PKCS11KeyPairType {
 
   EC BRAINPOOLP512R1 = new EC("1.3.36.3.3.2.8.1.1.13");
 
-  EC FRP256V1 = new EC("1.2.250.1.223.101.256.1");
-
   SM2 SM2 = new SM2();
 
   RSA RSA1024 = new RSA(1024);

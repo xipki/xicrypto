@@ -4,6 +4,7 @@
 package org.xipki.crypto.core.composite;
 
 import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
+import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.crypto.core.KeySpec;
 import org.xipki.codec.util.Args;
@@ -86,7 +87,7 @@ public class CompositeMLDSAPublicKey implements PublicKey {
           pqcVariant + " and " + tradKey);
     }
 
-    this.keyValue = org.xipki.codec.util.Arrays.concatenate(
+    this.keyValue = XiArrays.concatenate(
         pqcSpki.subjectPublicKey(), tradPkInfo.subjectPublicKey());
   }
 

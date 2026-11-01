@@ -7,7 +7,7 @@
 package org.xipki.codec.cbor;
 
 import org.xipki.codec.exception.CodecException;
-import org.xipki.codec.StreamSource;
+import org.xipki.codec.internal.StreamSource;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

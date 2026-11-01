@@ -38,7 +38,6 @@ public enum EcCurveEnum {
    */
   BRAINPOOLP512R1(CurveOIDs.brainpoolP512r1, 512, "BRAINPOOLP512R1"),
   SM2(CurveOIDs.sm2p256v1, 256, "SM2P256V1", "SM2"),
-  FRP256V1( CurveOIDs.frp256v1,  256, "FRP256V1"),
   ED25519(false, CurveOIDs.id_ED25519, 256, "ED25519", "EDWARDS25519"),
   ED448(false,   CurveOIDs.id_ED448,   448, "ED448", "EDWARDS448"),
   X25519(false,  CurveOIDs.id_X25519,  256, "X25519", "CURVE25519"),

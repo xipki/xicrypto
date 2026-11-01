@@ -13,6 +13,7 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.x509.KeyUsage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xipki.codec.asn1.*;
@@ -25,6 +26,7 @@ import org.xipki.codec.Hex;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -171,7 +173,7 @@ public class Asn1EncodingTest {
         // and (1 << (15 - n)) of the second byte.
         bcFlags |= (flag < 8) ? (1 << (7 - flag)) : (1 << (23 - flag));
       }
-      byte[] bcEncoded = new org.bouncycastle.asn1.x509.KeyUsage(bcFlags).getEncoded();
+      byte[] bcEncoded = new KeyUsage(bcFlags).getEncoded();
       Asn1BitString bs = new Asn1BitString(flags);
       Assert.assertEquals("flags " + Arrays.toString(flags),
           Hex.encode(bcEncoded), Hex.encode(bs.getEncoded()));
@@ -271,7 +273,7 @@ public class Asn1EncodingTest {
       int tag = (int) c[0];
       String value = (String) c[1];
       byte[] content = tag == Asn1Tags.UTF8_STRING
-          ? value.getBytes(java.nio.charset.StandardCharsets.UTF_8) : value.getBytes();
+          ? value.getBytes(StandardCharsets.UTF_8) : value.getBytes();
       byte[] encoded = encodeString(tag, content);
       Asn1Primitive p = Asn1Util.readAsn1Object(encoded);
       Assert.assertEquals(value + ": class", c[2], p.getClass());

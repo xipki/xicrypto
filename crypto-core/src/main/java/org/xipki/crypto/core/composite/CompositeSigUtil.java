@@ -3,6 +3,7 @@
 
 package org.xipki.crypto.core.composite;
 
+import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.codec.util.Args;
 import org.xipki.crypto.api.CryptoApi;
@@ -37,7 +38,7 @@ public class CompositeSigUtil {
     }
 
     byte[] lenCtx = new byte[] {(byte) ctx.length};
-    return org.xipki.codec.util.Arrays.concatenate(prefix, suite.label(), lenCtx, ctx, digestValue);
+    return XiArrays.concatenate(prefix, suite.label(), lenCtx, ctx, digestValue);
   }
 
   public static boolean verifyHash(

@@ -46,7 +46,7 @@ public class JsonInputStream {
     try {
       bytes = Files.readAllBytes(path);
     } catch (IOException e) {
-      throw new CodecException.CodecIOException(e);
+      throw new CodecException(e);
     }
 
     return newReader(bytes, allowComments);
@@ -59,7 +59,7 @@ public class JsonInputStream {
       bytes = is.readAllBytes();
       is.close();
     } catch (IOException e) {
-      throw new CodecException.CodecIOException(e);
+      throw new CodecException(e);
     }
 
     return newReader(bytes, allowComments);

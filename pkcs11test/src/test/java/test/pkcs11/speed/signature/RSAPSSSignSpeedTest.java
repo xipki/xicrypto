@@ -12,7 +12,7 @@ import org.xipki.pkcs11.wrapper.params.RSA_PKCS_PSS_PARAMS;
 import org.xipki.pkcs11.wrapper.spec.PKCS11KeyPairSpec;
 import org.xipki.pkcs11.wrapper.spec.PKCS11KeyPairType;
 import org.xipki.pkcs11.wrapper.type.CkMechanism;
-import test.pkcs11.speed.BenchmarkExecutor;
+import org.xipki.codec.speed.SpeedExecutor;
 import test.pkcs11.wrapper.TestBase;
 import test.pkcs11.wrapper.TestHSMs;
 
@@ -76,7 +76,7 @@ public class RSAPSSSignSpeedTest extends TestBase {
     Assume.assumeTrue(ckmCodeToName(signMechanism) + " is not supported, skip test",
         token.supportsMechanism(signMechanism, CKF_SIGN));
 
-    BenchmarkExecutor executor = new MySignExecutor();
+    SpeedExecutor executor = new MySignExecutor();
     executor.setThreads(TestHSMs.getSpeedThreads());
     executor.setDuration(TestHSMs.getSpeedDuration());
     executor.execute();

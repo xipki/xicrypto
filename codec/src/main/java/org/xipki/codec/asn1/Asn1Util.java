@@ -194,7 +194,7 @@ public class Asn1Util {
 
   public static void checkSequenceEnd(int index, int size) throws CodecException {
     if (index != size) {
-      throw CodecException.SEQ_WITH_UNEXPECTED_ELEMENTS;
+      throw CodecException.seqWithUnexpectedElements();
     }
   }
 

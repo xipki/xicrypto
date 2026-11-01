@@ -5,13 +5,13 @@ package test.pkcs11.speed.keygeneration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xipki.crypto.api.CryptoApiFactory;
 import org.xipki.pkcs11.wrapper.PKCS11KeyId;
 import org.xipki.pkcs11.wrapper.spec.PKCS11KeyPairSpec;
 import org.xipki.pkcs11.wrapper.type.CkMechanism;
 import test.pkcs11.speed.Pkcs11Executor;
 import test.pkcs11.wrapper.TestHSMs;
 
-import java.util.Random;
 
 /**
  * Keypair generation executor base class.
@@ -40,7 +40,7 @@ public abstract class KeypairGenExecutor extends Pkcs11Executor {
 
           if (inToken) {
             byte[] id = new byte[20];
-            new Random().nextBytes(id);
+            CryptoApiFactory.get().getSecureRandom().nextBytes(id);
             template.id(id);
           }
 

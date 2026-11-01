@@ -349,7 +349,7 @@ public class JsonBuilder {
     try {
       out.append(c);
     } catch (IOException e) {
-      throw new CodecException.CodecIOException(e);
+      throw new CodecException(e);
     }
   }
 
@@ -357,7 +357,7 @@ public class JsonBuilder {
     try {
       out.append(str);
     } catch (IOException e) {
-      throw new CodecException.CodecIOException(e);
+      throw new CodecException(e);
     }
   }
 

@@ -16,28 +16,9 @@ public class CryptoJdkTest extends CryptoApiConformance {
 
   private static final CryptoApi cryptoApi = new CryptoJdk();
 
-  private static final int FEATURE = Runtime.version().feature();
-
   @Override
   protected CryptoApi crypto() {
     return cryptoApi;
-  }
-
-  /** ML-DSA and ML-KEM of crypto-be-jdk require JDK 25+. */
-  @Override
-  protected boolean supportsMldsa() {
-    return FEATURE >= 25;
-  }
-
-  @Override
-  protected boolean supportsMlkem() {
-    return FEATURE >= 25;
-  }
-
-  /** Ed25519 and Ed448 of the JDK: JDK 15+. */
-  @Override
-  protected boolean supportsEdDsa() {
-    return FEATURE >= 15;
   }
 
   /**

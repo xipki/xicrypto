@@ -5,6 +5,7 @@ package test.pkcs11.speed.signature;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xipki.crypto.api.CryptoApiFactory;
 import org.xipki.pkcs11.wrapper.PKCS11KeyId;
 import org.xipki.pkcs11.wrapper.PKCS11Token;
 import org.xipki.pkcs11.wrapper.TokenException;
@@ -14,7 +15,6 @@ import test.pkcs11.speed.Pkcs11Executor;
 import test.pkcs11.wrapper.TestBase;
 import test.pkcs11.wrapper.TestHSMs;
 
-import java.util.Random;
 
 /**
  * Sign executor base class.
@@ -63,7 +63,7 @@ public abstract class SignExecutor extends Pkcs11Executor {
     this.inputLen = inputLen;
 
     byte[] id = new byte[20];
-    new Random().nextBytes(id);
+    CryptoApiFactory.get().getSecureRandom().nextBytes(id);
 
     PKCS11KeyPairSpec template = getMinimalKeyPairTemplate()
         .token(true).id(id).signVerify(true).sensitive(true).private_(true);

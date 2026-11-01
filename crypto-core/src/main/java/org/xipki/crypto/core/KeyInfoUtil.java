@@ -10,11 +10,11 @@ import org.xipki.codec.asn1.crypto.PqcPrivateKey;
 import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.Hex;
+import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.api.CryptoApi;
 import org.xipki.crypto.api.CryptoApiFactory;
 import org.xipki.crypto.core.composite.CompositeKeyInfoConverter;
 import org.xipki.codec.util.Args;
-import org.xipki.codec.util.Arrays;
 import org.xipki.codec.exception.CodecException;
 
 import java.math.BigInteger;
@@ -104,7 +104,7 @@ public class KeyInfoUtil {
    * @return Z_A.
    */
   public static byte[] getSM2Z(byte[] userID, BigInteger pubPointX, BigInteger pubPointY) {
-    byte[] ecPoint = Arrays.concatenate(new byte[] {4},
+    byte[] ecPoint = XiArrays.concatenate(new byte[] {4},
         BigIntegers.asUnsignedByteArray(32, pubPointX),
         BigIntegers.asUnsignedByteArray(32, pubPointY));
     return getSM2Z(userID, ecPoint);

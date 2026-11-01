@@ -3,12 +3,12 @@
 
 package org.xipki.crypto.core.composite;
 
-import org.xipki.codec.asn1.Asn1OctetString;
 import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
 import org.xipki.codec.asn1.crypto.ECPrivateKey;
 import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.core.HashAlgo;
 import org.xipki.crypto.core.KemUtil;
 import org.xipki.crypto.core.KeyInfoUtil;
@@ -38,39 +38,39 @@ public class CompositeKemUtil {
 
   private static final CryptoApi crypto = CryptoApiFactory.get();
 
-  public static SecretWithEncap encap(CompositeKemSuite algoSuite, byte[] pk, SecureRandom rnd)
+  public static SecretWithEncap encap(CompositeKemSuite algoSuite, byte[] pk)
       throws XiSecurityException {
     CompKemMlkemVariant mlkemVariant = algoSuite.pqcVariant();
     CompKemTradVariant tradVariant = algoSuite.tradVariant();
     byte[] mlkemPk = Arrays.copyOfRange(pk, 0, mlkemVariant.pkSize());
     byte[] tradPk = Arrays.copyOfRange(pk, mlkemVariant.pkSize(), pk.length);
 
-    SecretWithEncap mlkemRes = mlKemEncapsulate(mlkemVariant, mlkemPk, rnd);
-    SecretWithEncap tradRes  = tradEcapsulate(tradVariant, tradPk, rnd);
+    SecretWithEncap mlkemRes = mlKemEncapsulate(mlkemVariant, mlkemPk);
+    SecretWithEncap tradRes  = tradEcapsulate(tradVariant, tradPk);
     byte[] k = sha3256Kdf(mlkemRes.secret(), tradRes.secret(), tradRes.encap(),
                 tradPk, algoSuite.label());
-    byte[] ct = org.xipki.codec.util.Arrays.concatenate(mlkemRes.encap(), tradRes.encap());
+    byte[] ct = XiArrays.concatenate(mlkemRes.encap(), tradRes.encap());
     return new SecretWithEncapImpl(k, ct);
   }
 
-  private static SecretWithEncap mlKemEncapsulate(
-      CompKemMlkemVariant variant, byte[] pk, SecureRandom rnd) {
+  private static SecretWithEncap mlKemEncapsulate(CompKemMlkemVariant variant, byte[] pk) {
     KeySpec keySpec = variant == CompKemMlkemVariant.mlkem768
                       ? KeySpec.MLKEM768 : KeySpec.MLKEM1024;
-    return KemUtil.encapsulateKey(keySpec, pk, rnd);
+    return KemUtil.encapsulateKey(keySpec, pk);
   }
 
-  private static SecretWithEncap tradEcapsulate(
-      CompKemTradVariant variant, byte[] pk, SecureRandom rnd) throws XiSecurityException {
+  private static SecretWithEncap tradEcapsulate(CompKemTradVariant variant, byte[] pk)
+      throws XiSecurityException {
+    SecureRandom rnd = crypto.getSecureRandom();
     switch (variant) {
       case X25519: {
-        byte[] tmpSk = crypto.generateX25519PrivateKey(rnd);
+        byte[] tmpSk = crypto.generateX25519PrivateKey();
         byte[] tmpPk = crypto.generateX25519PublicKey(tmpSk);
         byte[] k = crypto.calculateX25519Agreement(tmpSk, pk);
         return new SecretWithEncapImpl(k, tmpPk);
       }
       case X448: {
-        byte[] tmpSk = crypto.generateX448PrivateKey(rnd);
+        byte[] tmpSk = crypto.generateX448PrivateKey();
         byte[] tmpPk = crypto.generateX448PublicKey(tmpSk);
         byte[] k = crypto.calculateX448Agreement(tmpSk, pk);
         return new SecretWithEncapImpl(k, tmpPk);
@@ -192,14 +192,21 @@ public class CompositeKemUtil {
       case RSA3072_OAEP:
       case RSA4096_OAEP: {
         try {
+          // sk is the RSAPrivateKey, the content of the privateKey OCTET STRING
           PrivateKeyInfo privateKeyInfo = new PrivateKeyInfo(
-              AlgorithmIdentifier.ofNullParams(AlgorithmOIDs.id_rsaEncryption),
-              Asn1OctetString.fromEncoded(sk));
+              AlgorithmIdentifier.ofNullParams(AlgorithmOIDs.id_rsaEncryption), sk);
           RSAPrivateKey jceSk = (RSAPrivateKey) KeyInfoUtil.getPrivateKey(privateKeyInfo);
           BigInteger modulus = jceSk.getModulus();
           Cipher cipher = crypto.newCipher("RSA/ECB/NoPadding");
           cipher.init(Cipher.DECRYPT_MODE, jceSk);
           byte[] em = cipher.doFinal(ct);
+          int k = (modulus.bitLength() + 7) / 8;
+          if (em.length < k) {
+            // some providers (e.g. BouncyCastle) strip the leading zero bytes
+            byte[] padded = new byte[k];
+            System.arraycopy(em, 0, padded, k - em.length, em.length);
+            em = padded;
+          }
           return Pkcs1Util.RSAES_OAEP_DECODE(em, modulus.bitLength(), HashAlgo.SHA256);
         } catch (XiSecurityException e) {
           throw e;

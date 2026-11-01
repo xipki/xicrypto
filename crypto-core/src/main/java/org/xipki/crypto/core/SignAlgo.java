@@ -24,6 +24,7 @@ import org.xipki.crypto.api.CryptoApi;
 import org.xipki.crypto.api.CryptoApiFactory;
 
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -566,7 +567,6 @@ public enum SignAlgo {
             ? SignAlgo.RSA_SHA256 : SignAlgo.RSAPSS_SHA256;
       case P256:
       case BRAINPOOLP256R1:
-      case FRP256V1:
         return SignAlgo.ECDSA_SHA256;
       case P384:
       case BRAINPOOLP384R1:
@@ -709,7 +709,7 @@ public enum SignAlgo {
     Asn1Oid oid;
     try {
       oid = KeyInfoUtil.getAlgorithmOid(key);
-    } catch (java.security.InvalidKeyException e) {
+    } catch (InvalidKeyException e) {
       throw new NoSuchAlgorithmException(e.getMessage(), e);
     }
 
