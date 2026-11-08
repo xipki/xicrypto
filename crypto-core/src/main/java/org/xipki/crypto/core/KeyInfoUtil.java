@@ -13,6 +13,12 @@ import org.xipki.codec.Hex;
 import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.api.CryptoApi;
 import org.xipki.crypto.api.CryptoApiFactory;
+import org.xipki.crypto.api.MldsaVariant;
+import org.xipki.crypto.api.MlkemVariant;
+import org.xipki.crypto.core.composite.CompositeMLDSAPrivateKey;
+import org.xipki.crypto.core.composite.CompositeMLDSAPublicKey;
+import org.xipki.crypto.core.composite.CompositeMLKEMPrivateKey;
+import org.xipki.crypto.core.composite.CompositeMLKEMPublicKey;
 import org.xipki.crypto.core.composite.CompositeKeyInfoConverter;
 import org.xipki.codec.util.Args;
 import org.xipki.codec.exception.CodecException;
@@ -21,13 +27,17 @@ import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.interfaces.ECKey;
+import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Locale;
@@ -268,6 +278,105 @@ public class KeyInfoUtil {
       off += len;
     }
     return okm;
+  }
+
+  /**
+   * Generates a key pair of the given key spec, with the random of the crypto backend.
+   * @param keySpec the key spec.
+   * @return the generated key pair.
+   * @throws NoSuchAlgorithmException if the algorithm is not supported.
+   * @throws NoSuchProviderException if the provider is not available.
+   * @throws InvalidAlgorithmParameterException if the key spec is invalid.
+   */
+  public static KeyPair generateKeyPair(KeySpec keySpec)
+      throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+    SecureRandom random = cryptoApi.getSecureRandom();
+    switch (keySpec) {
+      case RSA2048:
+      case RSA3072:
+      case RSA4096: {
+        KeyPairGenerator kpGen = cryptoApi.newKeyPairGenerator("RSA");
+        Integer i = keySpec.RSAKeyBitSize();
+        assert i != null;
+        int keyBitSize = i;
+        kpGen.initialize(keyBitSize, random);
+        return kpGen.generateKeyPair();
+      }
+      case ED25519:
+      case ED448:
+      case X25519:
+      case X448: {
+        String algorithm = keySpec == KeySpec.ED25519 ? "ED25519"
+            : keySpec == KeySpec.ED448  ? "ED448"
+            : keySpec == KeySpec.X25519 ? "X25519" : "X448";
+
+        // 255 for Curve25519: accepted by both the JDK and BouncyCastle
+        int keyBitSize = keySpec == KeySpec.ED25519 ? 255
+            : keySpec == KeySpec.ED448  ? 448
+            : keySpec == KeySpec.X25519 ? 255 : 448;
+
+        KeyPairGenerator kpGen = cryptoApi.newKeyPairGenerator(algorithm);
+        kpGen.initialize(keyBitSize, random);
+        return kpGen.generateKeyPair();
+      }
+      case MLDSA44:
+      case MLDSA65:
+      case MLDSA87: {
+        MldsaVariant spec =
+              (keySpec == KeySpec.MLDSA44)  ? MldsaVariant.ml_dsa_44
+            : (keySpec == KeySpec.MLDSA65)  ? MldsaVariant.ml_dsa_65
+            : MldsaVariant.ml_dsa_87;
+        return cryptoApi.generateKeyPair(spec);
+      }
+      case MLKEM512:
+      case MLKEM768:
+      case MLKEM1024: {
+        MlkemVariant spec =
+              (keySpec == KeySpec.MLKEM512) ? MlkemVariant.ml_kem_512
+            : (keySpec == KeySpec.MLKEM768) ? MlkemVariant.ml_kem_768
+            : MlkemVariant.ml_kem_1024;
+        return cryptoApi.generateKeyPair(spec);
+      }
+      case P256:
+      case P384:
+      case P521:
+      case BRAINPOOLP256R1:
+      case BRAINPOOLP384R1:
+      case BRAINPOOLP512R1:
+      case SM2: {
+        EcCurveEnum curve = keySpec.ecCurve();
+        assert curve != null;
+        ECGenParameterSpec spec = new ECGenParameterSpec(curve.oid().getId());
+        KeyPairGenerator kpGen = cryptoApi.newKeyPairGenerator("EC");
+        kpGen.initialize(spec, random);
+        return kpGen.generateKeyPair();
+      }
+    }
+
+    if (keySpec.isCompositeMLDSA()) {
+      KeyPair pqcKeyPair = generateKeyPair(keySpec.compositePqcVariant());
+      KeyPair tradKeyPair = generateKeyPair(keySpec.compositeTradVariant());
+      CompositeMLDSAPrivateKey sk;
+      try {
+        sk = new CompositeMLDSAPrivateKey(pqcKeyPair.getPrivate(), tradKeyPair.getPrivate());
+      } catch (CodecException e) {
+        throw new InvalidAlgorithmParameterException(e);
+      }
+
+      CompositeMLDSAPublicKey pk = new CompositeMLDSAPublicKey(
+          pqcKeyPair.getPublic(), tradKeyPair.getPublic());
+      return new KeyPair(pk, sk);
+    } else if (keySpec.isCompositeMLKEM()) {
+      KeyPair pqcKeyPair = generateKeyPair(keySpec.compositePqcVariant());
+      KeyPair tradKeyPair = generateKeyPair(keySpec.compositeTradVariant());
+      CompositeMLKEMPrivateKey sk = new CompositeMLKEMPrivateKey(
+          pqcKeyPair.getPrivate(), tradKeyPair.getPrivate());
+      CompositeMLKEMPublicKey pk = new CompositeMLKEMPublicKey(
+          pqcKeyPair.getPublic(), tradKeyPair.getPublic());
+      return new KeyPair(pk, sk);
+    }
+
+    throw new IllegalStateException("unknown keyspec " + keySpec);
   }
 
   public static byte[] getPqcSeed(PrivateKeyInfo skInfo) throws CodecException {
