@@ -40,4 +40,14 @@ public interface ContentVerifierProvider {
    */
   ContentVerifier get(AlgorithmIdentifier verifierAlgorithmIdentifier)
       throws GenerationException;
+
+  /**
+   * Return a ContentVerifier that matches the passed in algorithm identifier,
+   *
+   * @param verifierAlgorithmIdentifier the algorithm required.
+   * @return a matching ContentVerifier
+   * @throws GenerationException if the required ContentVerifier cannot be created.
+   */
+  ContentVerifier getForC509(int verifierAlgorithmIdentifier)
+      throws GenerationException;
 }

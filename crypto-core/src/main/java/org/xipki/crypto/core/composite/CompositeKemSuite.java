@@ -8,6 +8,7 @@ import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.Asn1Primitive;
 import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.c509.ConstPublicKeyAlgorithm;
 import org.xipki.crypto.core.KeySpec;
 
 import java.nio.charset.StandardCharsets;
@@ -68,6 +69,7 @@ public enum CompositeKemSuite {
       CompKemMlkemVariant.mlkem1024, CompKemTradVariant.ECDH_P521);
 
   private final AlgorithmIdentifier algId;
+
   private final Asn1Oid oid;
   private final byte[] label;
   private final CompKemMlkemVariant pqcVariant;
@@ -78,6 +80,7 @@ public enum CompositeKemSuite {
                     CompKemMlkemVariant pqcVariant, CompKemTradVariant tradVariant) {
     this.oid = oid;
     this.algId = new AlgorithmIdentifier(oid);
+
     this.label = label.getBytes(StandardCharsets.US_ASCII);
     this.pqcVariant = pqcVariant;
     this.tradVariant = tradVariant;
@@ -134,6 +137,11 @@ public enum CompositeKemSuite {
   public AlgorithmIdentifier algId() {
     return algId;
   }
+
+  public Integer c509AlgId() {
+    return keySpec.c509AlgId();
+  }
+
 
   public CompKemMlkemVariant pqcVariant() {
     return pqcVariant;

@@ -10,8 +10,10 @@ import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
 import org.xipki.crypto.core.HashAlgo;
 import org.xipki.crypto.core.KeySpec;
+import org.xipki.crypto.core.SignAlgo;
 
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Composite Sig Suite enumeration.
@@ -102,6 +104,8 @@ public enum CompositeSigSuite {
 
   private final AlgorithmIdentifier algId;
 
+  private final Integer c509AlgId;
+
   private final HashAlgo ph;
 
   private final CompSigMldsaVariant pqcVariant;
@@ -116,7 +120,16 @@ public enum CompositeSigSuite {
                     CompSigMldsaVariant pqcVariant, CompSigTradVariant tradVariant) {
     this.label = label.getBytes(StandardCharsets.UTF_8);
     this.oid = oid;
+
     this.algId = new AlgorithmIdentifier(oid);
+    Integer c509AlgId = null;
+    try {
+      SignAlgo signAlgo = SignAlgo.ofAlgorithmIdentifier(algId);
+      c509AlgId = signAlgo.c509AlgorithmIdentifier();
+    } catch (NoSuchAlgorithmException e) {
+    }
+
+    this.c509AlgId = c509AlgId;
     this.ph = ph;
     this.pqcVariant = pqcVariant;
     this.tradVariant = tradVariant;
@@ -142,6 +155,10 @@ public enum CompositeSigSuite {
 
   public AlgorithmIdentifier algId() {
     return algId;
+  }
+
+  public Integer c509AlgId() {
+    return c509AlgId;
   }
 
   public CompSigMldsaVariant pqcVariant() {
