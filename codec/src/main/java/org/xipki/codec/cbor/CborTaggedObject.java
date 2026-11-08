@@ -5,6 +5,7 @@ package org.xipki.codec.cbor;
 
 import org.xipki.codec.exception.CodecException;
 import org.xipki.codec.Hex;
+import org.xipki.codec.util.ToStringUtil;
 
 import java.util.Arrays;
 
@@ -13,7 +14,7 @@ import java.util.Arrays;
  *
  * @author Lijun Liao (xipki)
  */
-public class CborTaggedObject implements CborEncodable {
+public class CborTaggedObject extends CborEncodable {
 
   private final long tag;
 
@@ -53,6 +54,14 @@ public class CborTaggedObject implements CborEncodable {
     return (value == null) ? str + "<null>"
         : (value instanceof byte[]) ? str + "h'" + Hex.encode(((byte[]) value))
         : str + value;
+  }
+
+  @Override
+  public StringBuilder toString(StringBuilder buf, int indentLevel) {
+    String prefix = "#6." + tag + "\n";
+    ToStringUtil.appendIndent(buf, indentLevel, prefix);
+    ToStringUtil.appendIndent(buf, indentLevel + 1, value.toString());
+    return null;
   }
 
   @Override

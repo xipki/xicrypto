@@ -256,9 +256,10 @@ class TagContent {
       p = baseObject.content;
     }
 
-    if (p.getTagNo() != expectedTagNo) {
-      throw new CodecException("base object has tagNo " + baseObject.content.getTagNo() + ", but " +
-          "expected " + expectedTagNo);
+    if (p.getTagNo() != expectedTagNo || p instanceof Asn1TaggedObject) {
+      String type = (p instanceof Asn1TaggedObject) ? "tagged" : "universal";
+      throw new CodecException("base object is " + type + " with tagNo " + p.getTagNo() +
+          ", but expected universal with tagNo " + expectedTagNo);
     }
 
     return p;

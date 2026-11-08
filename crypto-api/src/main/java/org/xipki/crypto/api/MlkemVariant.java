@@ -5,6 +5,7 @@ package org.xipki.crypto.api;
 
 import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.oid.NistOIDs;
+import org.xipki.codec.c509.ConstPublicKeyAlgorithm;
 
 /**
  * @author Lijun Liao (xipki)
@@ -23,4 +24,18 @@ public enum MlkemVariant {
       return null;
     }
   }
+
+  public static MlkemVariant fromC509PublicKeyAlg(int c509AlgId) {
+    switch (c509AlgId) {
+      case ConstPublicKeyAlgorithm.ML_KEM_512:
+        return ml_kem_512;
+      case ConstPublicKeyAlgorithm.ML_KEM_768:
+        return ml_kem_768;
+      case ConstPublicKeyAlgorithm.ML_KEM_1024:
+        return ml_kem_1024;
+      default:
+        return null;
+    }
+  }
+
 }

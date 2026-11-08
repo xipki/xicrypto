@@ -35,7 +35,7 @@ public class CompositeMLKEMPrivateKey implements PrivateKey {
 
   public CompositeMLKEMPrivateKey(PrivateKeyInfo privateKeyInfo)
       throws InvalidKeySpecException {
-    this.suite = CompositeKemSuite.getAlgoSuite(privateKeyInfo.getPrivateKeyAlgorithm());
+    this.suite = CompositeKemSuite.ofAlgId(privateKeyInfo.getPrivateKeyAlgorithm());
     Args.notNull(suite, "suite");
     byte[] encodedKeyValue = privateKeyInfo.privateKey();
 

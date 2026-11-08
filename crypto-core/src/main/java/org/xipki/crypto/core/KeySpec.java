@@ -9,7 +9,11 @@ import org.xipki.codec.asn1.crypto.RSAPublicKey;
 import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
 import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.c509.C509RSASubjectPublicKey;
+import org.xipki.codec.c509.C509SubjectPublicKey;
+import org.xipki.codec.c509.ConstPublicKeyAlgorithm;
 import org.xipki.codec.exception.CodecException;
+import org.xipki.crypto.core.composite.CompositeKemSuite;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -27,62 +31,95 @@ public enum KeySpec {
   RSA3072("RSA3072", 3072),
   RSA4096("RSA4096", 4096),
   // EC
-  P256("P256", Kind.WEIERSTRASS, CurveOIDs.secp256r1),
-  P384("P384", Kind.WEIERSTRASS, CurveOIDs.secp384r1),
-  P521("P521", Kind.WEIERSTRASS, CurveOIDs.secp521r1),
+  P256("P256", Kind.WEIERSTRASS, CurveOIDs.secp256r1, ConstPublicKeyAlgorithm.ec_secp256r1),
+  P384("P384", Kind.WEIERSTRASS, CurveOIDs.secp384r1, ConstPublicKeyAlgorithm.ec_secp384r1),
+  P521("P521", Kind.WEIERSTRASS, CurveOIDs.secp521r1, ConstPublicKeyAlgorithm.ec_secp521r1),
   /** BrainPool P256R1 EC Key */
-  BRAINPOOLP256R1("BRAINPOOLP256R1", Kind.WEIERSTRASS, CurveOIDs.brainpoolP256r1),
+  BRAINPOOLP256R1("BRAINPOOLP256R1", Kind.WEIERSTRASS, CurveOIDs.brainpoolP256r1,
+      ConstPublicKeyAlgorithm.ec_brainpoolP256r1),
   /** BrainPool P384R1 EC Key */
-  BRAINPOOLP384R1("BRAINPOOLP384R1", Kind.WEIERSTRASS, CurveOIDs.brainpoolP384r1),
+  BRAINPOOLP384R1("BRAINPOOLP384R1", Kind.WEIERSTRASS, CurveOIDs.brainpoolP384r1,
+      ConstPublicKeyAlgorithm.ec_brainpoolP384r1),
   /** BrainPool P512R1 EC Key */
-  BRAINPOOLP512R1("BRAINPOOLP512R1", Kind.WEIERSTRASS, CurveOIDs.brainpoolP512r1),
-  SM2("SM2", Kind.WEIERSTRASS, CurveOIDs.sm2p256v1),
+  BRAINPOOLP512R1("BRAINPOOLP512R1", Kind.WEIERSTRASS, CurveOIDs.brainpoolP512r1,
+      ConstPublicKeyAlgorithm.ec_brainpoolP512r1),
+  SM2("SM2", Kind.WEIERSTRASS, CurveOIDs.sm2p256v1, ConstPublicKeyAlgorithm.ec_sm2p256v1),
   // Edwards and Montgomery EC key
-  X25519 ("X25519",  Kind.MONTGOMERY, CurveOIDs.id_X25519),
-  X448   ("X448",    Kind.MONTGOMERY, CurveOIDs.id_X448),
-  ED25519("ED25519", Kind.EDWARDS,    CurveOIDs.id_ED25519),
-  ED448  ("ED448",   Kind.EDWARDS,    CurveOIDs.id_ED448),
+  X25519 ("X25519",  Kind.MONTGOMERY, CurveOIDs.id_X25519, ConstPublicKeyAlgorithm.x25519),
+  X448   ("X448",    Kind.MONTGOMERY, CurveOIDs.id_X448, ConstPublicKeyAlgorithm.x448),
+  ED25519("ED25519", Kind.EDWARDS,    CurveOIDs.id_ED25519, ConstPublicKeyAlgorithm.ed25519),
+  ED448  ("ED448",   Kind.EDWARDS,    CurveOIDs.id_ED448, ConstPublicKeyAlgorithm.ed448),
   // PQC MLDSA (Dilithium)
-  MLDSA44("MLDSA44", Kind.MLDSA, AlgorithmOIDs.id_ml_dsa_44),
-  MLDSA65("MLDSA65", Kind.MLDSA, AlgorithmOIDs.id_ml_dsa_65),
-  MLDSA87("MLDSA87", Kind.MLDSA, AlgorithmOIDs.id_ml_dsa_87),
+  MLDSA44("MLDSA44", Kind.MLDSA, AlgorithmOIDs.id_ml_dsa_44, ConstPublicKeyAlgorithm.ML_DSA_44),
+  MLDSA65("MLDSA65", Kind.MLDSA, AlgorithmOIDs.id_ml_dsa_65, ConstPublicKeyAlgorithm.ML_DSA_65),
+  MLDSA87("MLDSA87", Kind.MLDSA, AlgorithmOIDs.id_ml_dsa_87, ConstPublicKeyAlgorithm.ML_DSA_87),
   // PQC ML-KEM (Kyber)
-  MLKEM512 ("MLKEM512",  Kind.MLKEM, AlgorithmOIDs.id_ml_kem_512),
-  MLKEM768 ("MLKEM768",  Kind.MLKEM, AlgorithmOIDs.id_ml_kem_768),
-  MLKEM1024("MLKEM1024", Kind.MLKEM, AlgorithmOIDs.id_ml_kem_1024),
+  MLKEM512 ("MLKEM512",  Kind.MLKEM, AlgorithmOIDs.id_ml_kem_512,
+      ConstPublicKeyAlgorithm.ML_KEM_512),
+  MLKEM768 ("MLKEM768",  Kind.MLKEM, AlgorithmOIDs.id_ml_kem_768,
+      ConstPublicKeyAlgorithm.ML_KEM_768),
+  MLKEM1024("MLKEM1024", Kind.MLKEM, AlgorithmOIDs.id_ml_kem_1024,
+      ConstPublicKeyAlgorithm.ML_KEM_1024),
 
   // Composite MLDSA + Trad key
-  MLDSA44_RSA2048(MLDSA44, RSA2048, AlgorithmOIDs.id_MLDSA44_RSA2048_PSS_SHA256),
-  MLDSA44_ED25519(MLDSA44, ED25519, AlgorithmOIDs.id_MLDSA44_Ed25519_SHA512),
-  MLDSA44_P256(MLDSA44, P256, AlgorithmOIDs.id_MLDSA44_ECDSA_P256_SHA256),
-  MLDSA65_RSA3072(MLDSA65, RSA3072, AlgorithmOIDs.id_MLDSA65_RSA3072_PSS_SHA512),
-  MLDSA65_RSA4096(MLDSA65, RSA4096, AlgorithmOIDs.id_MLDSA65_RSA4096_PSS_SHA512),
-  MLDSA65_P256(MLDSA65, P256, AlgorithmOIDs.id_MLDSA65_ECDSA_P256_SHA512),
-  MLDSA65_P384(MLDSA65, P384, AlgorithmOIDs.id_MLDSA65_ECDSA_P384_SHA512),
-  MLDSA65_BP256(MLDSA65, BRAINPOOLP256R1, AlgorithmOIDs.id_MLDSA65_ECDSA_brainpoolP256r1_SHA512),
-  MLDSA65_ED25519(MLDSA65, ED25519, AlgorithmOIDs.id_MLDSA65_Ed25519_SHA512),
-  MLDSA87_P384(MLDSA87, P384, AlgorithmOIDs.id_MLDSA87_ECDSA_P384_SHA512),
-  MLDSA87_BP384(MLDSA87, BRAINPOOLP384R1, AlgorithmOIDs.id_MLDSA87_ECDSA_brainpoolP384r1_SHA512),
-  MLDSA87_ED448(MLDSA87, ED448, AlgorithmOIDs.id_MLDSA87_Ed448_SHAKE256),
-  MLDSA87_RSA3072(MLDSA87, RSA3072, AlgorithmOIDs.id_MLDSA87_RSA3072_PSS_SHA512),
-  MLDSA87_RSA4096(MLDSA87, RSA4096, AlgorithmOIDs.id_MLDSA87_RSA4096_PSS_SHA512),
-  MLDSA87_P521(MLDSA87, P521, AlgorithmOIDs.id_MLDSA87_ECDSA_P521_SHA512),
+  MLDSA44_RSA2048(MLDSA44, RSA2048, AlgorithmOIDs.id_MLDSA44_RSA2048_PSS_SHA256,
+      ConstPublicKeyAlgorithm.MLDSA44_RSA2048_PSS_SHA256),
+  MLDSA44_ED25519(MLDSA44, ED25519, AlgorithmOIDs.id_MLDSA44_Ed25519_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA44_Ed25519_SHA512),
+  MLDSA44_P256(MLDSA44, P256, AlgorithmOIDs.id_MLDSA44_ECDSA_P256_SHA256,
+      ConstPublicKeyAlgorithm.MLDSA44_ECDSA_P256_SHA256),
+  MLDSA65_RSA3072(MLDSA65, RSA3072, AlgorithmOIDs.id_MLDSA65_RSA3072_PSS_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA65_RSA3072_PSS_SHA512),
+  MLDSA65_RSA4096(MLDSA65, RSA4096, AlgorithmOIDs.id_MLDSA65_RSA4096_PSS_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA65_RSA4096_PSS_SHA512),
+  MLDSA65_P256(MLDSA65, P256, AlgorithmOIDs.id_MLDSA65_ECDSA_P256_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA65_ECDSA_P256_SHA512),
+  MLDSA65_P384(MLDSA65, P384, AlgorithmOIDs.id_MLDSA65_ECDSA_P384_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA65_ECDSA_P384_SHA512),
+  MLDSA65_BP256(MLDSA65, BRAINPOOLP256R1, AlgorithmOIDs.id_MLDSA65_ECDSA_brainpoolP256r1_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA65_ECDSA_brainpoolP256r1_SHA512),
+  MLDSA65_ED25519(MLDSA65, ED25519, AlgorithmOIDs.id_MLDSA65_Ed25519_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA65_Ed25519_SHA512),
+  MLDSA87_P384(MLDSA87, P384, AlgorithmOIDs.id_MLDSA87_ECDSA_P384_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA87_ECDSA_P384_SHA512),
+  MLDSA87_BP384(MLDSA87, BRAINPOOLP384R1, AlgorithmOIDs.id_MLDSA87_ECDSA_brainpoolP384r1_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA87_ECDSA_brainpoolP384r1_SHA512),
+  MLDSA87_ED448(MLDSA87, ED448, AlgorithmOIDs.id_MLDSA87_Ed448_SHAKE256,
+      ConstPublicKeyAlgorithm.MLDSA87_Ed448_SHAKE256),
+  MLDSA87_RSA3072(MLDSA87, RSA3072, AlgorithmOIDs.id_MLDSA87_RSA3072_PSS_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA87_RSA3072_PSS_SHA512),
+  MLDSA87_RSA4096(MLDSA87, RSA4096, AlgorithmOIDs.id_MLDSA87_RSA4096_PSS_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA87_RSA4096_PSS_SHA512),
+  MLDSA87_P521(MLDSA87, P521, AlgorithmOIDs.id_MLDSA87_ECDSA_P521_SHA512,
+      ConstPublicKeyAlgorithm.MLDSA87_ECDSA_P521_SHA512),
 
   // Composite KEM + Trad key
-  MLKEM768_RSA2048(MLKEM768, RSA2048, AlgorithmOIDs.id_MLKEM768_RSA2048_SHA3_256),
-  MLKEM768_RSA3072(MLKEM768, RSA3072, AlgorithmOIDs.id_MLKEM768_RSA3072_SHA3_256),
-  MLKEM768_RSA4096(MLKEM768, RSA4096, AlgorithmOIDs.id_MLKEM768_RSA4096_SHA3_256),
-  MLKEM768_X25519(MLKEM768, X25519, AlgorithmOIDs.id_MLKEM768_X25519_SHA3_256),
-  MLKEM768_P256(MLKEM768, P256, AlgorithmOIDs.id_MLKEM768_ECDH_P256_SHA3_256),
-  MLKEM768_P384(MLKEM768, P384, AlgorithmOIDs.id_MLKEM768_ECDH_P384_SHA3_256),
+  MLKEM768_RSA2048(MLKEM768, RSA2048, AlgorithmOIDs.id_MLKEM768_RSA2048_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM768_RSA2048_SHA3_256),
+  MLKEM768_RSA3072(MLKEM768, RSA3072, AlgorithmOIDs.id_MLKEM768_RSA3072_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM768_RSA3072_SHA3_256),
+  MLKEM768_RSA4096(MLKEM768, RSA4096, AlgorithmOIDs.id_MLKEM768_RSA4096_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM768_RSA4096_SHA3_256),
+  MLKEM768_X25519(MLKEM768, X25519, AlgorithmOIDs.id_MLKEM768_X25519_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM768_X25519_SHA3_256),
+  MLKEM768_P256(MLKEM768, P256, AlgorithmOIDs.id_MLKEM768_ECDH_P256_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM768_ECDH_P256_SHA3_256),
+  MLKEM768_P384(MLKEM768, P384, AlgorithmOIDs.id_MLKEM768_ECDH_P384_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM768_ECDH_P384_SHA3_256),
   MLKEM768_BP256(MLKEM768, BRAINPOOLP256R1,
-      AlgorithmOIDs.id_MLKEM768_ECDH_brainpoolP256r1_SHA3_256),
-  MLKEM1024_RSA3072(MLKEM1024, RSA3072, AlgorithmOIDs.id_MLKEM1024_RSA3072_SHA3_256),
-  MLKEM1024_P384(MLKEM1024, P384, AlgorithmOIDs.id_MLKEM1024_ECDH_P384_SHA3_256),
+      AlgorithmOIDs.id_MLKEM768_ECDH_brainpoolP256r1_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM768_ECDH_brainpoolP256r1_SHA3_256),
+  MLKEM1024_RSA3072(MLKEM1024, RSA3072, AlgorithmOIDs.id_MLKEM1024_RSA3072_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM1024_RSA3072_SHA3_256),
+  MLKEM1024_P384(MLKEM1024, P384, AlgorithmOIDs.id_MLKEM1024_ECDH_P384_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM1024_ECDH_P384_SHA3_256),
   MLKEM1024_BP384(MLKEM1024, BRAINPOOLP384R1,
-      AlgorithmOIDs.id_MLKEM1024_ECDH_brainpoolP384r1_SHA3_256),
-  MLKEM1024_X448(MLKEM1024, X448, AlgorithmOIDs.id_MLKEM1024_X448_SHA3_256),
-  MLKEM1024_P521(MLKEM1024, P521, AlgorithmOIDs.id_MLKEM1024_ECDH_P521_SHA3_256);
+      AlgorithmOIDs.id_MLKEM1024_ECDH_brainpoolP384r1_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM1024_ECDH_brainpoolP384r1_SHA3_256),
+  MLKEM1024_X448(MLKEM1024, X448, AlgorithmOIDs.id_MLKEM1024_X448_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM1024_X448_SHA3_256),
+  MLKEM1024_P521(MLKEM1024, P521, AlgorithmOIDs.id_MLKEM1024_ECDH_P521_SHA3_256,
+      ConstPublicKeyAlgorithm.MLKEM1024_ECDH_P521_SHA3_256);
 
   private enum Kind {
     RSA,
@@ -97,6 +134,8 @@ public enum KeySpec {
 
   private final AlgorithmIdentifier algId;
 
+  private final Integer c509AlgId;
+
   /** null for composite keys. */
   private final Kind kind;
 
@@ -106,11 +145,13 @@ public enum KeySpec {
 
   private final KeySpec compositeTradVariant;
 
-  KeySpec(KeySpec compositePqcVariant, KeySpec compositeTradVariant, Asn1Oid oid) {
+  KeySpec(KeySpec compositePqcVariant, KeySpec compositeTradVariant,
+          Asn1Oid oid, Integer c509AlgId) {
     this.text = name().replace('_', '-');
     this.compositePqcVariant  = compositePqcVariant;
     this.compositeTradVariant = compositeTradVariant;
     this.algId = new AlgorithmIdentifier(oid);
+    this.c509AlgId = c509AlgId;
     this.kind = null;
     this.rsaModulusBits = null;
   }
@@ -122,6 +163,7 @@ public enum KeySpec {
     this.kind = Kind.RSA;
     this.rsaModulusBits = rsaModulusBits;
     this.algId = AlgorithmIdentifier.ofNullParams(AlgorithmOIDs.id_rsaEncryption);
+    this.c509AlgId = null;
   }
 
   /**
@@ -130,7 +172,7 @@ public enum KeySpec {
    * @param kind the kind of the key.
    * @param oid the curve OID for EC keys, the algorithm OID otherwise.
    */
-  KeySpec(String text, Kind kind, Asn1Oid oid) {
+  KeySpec(String text, Kind kind, Asn1Oid oid, Integer c509AlgId) {
     this.compositePqcVariant  = null;
     this.compositeTradVariant = null;
     this.text = text;
@@ -139,6 +181,7 @@ public enum KeySpec {
     this.algId = (kind == Kind.WEIERSTRASS)
         ? new AlgorithmIdentifier(AlgorithmOIDs.id_ecPublicKey, oid)
         : new AlgorithmIdentifier(oid);
+    this.c509AlgId = c509AlgId;
   }
 
   public boolean isRSA() {
@@ -233,6 +276,10 @@ public enum KeySpec {
     return algId;
   }
 
+  public Integer c509AlgId() {
+    return c509AlgId;
+  }
+
   public KeySpec compositePqcVariant() {
     return compositePqcVariant;
   }
@@ -284,6 +331,58 @@ public enum KeySpec {
     }
 
     return null;
+  }
+
+  public static KeySpec ofPublicKey(C509SubjectPublicKey keyInfo) {
+    int keyAlgId = keyInfo.algorithm();
+
+    if (keyAlgId == ConstPublicKeyAlgorithm.rsaEncryption) {
+      int modulusBitLen = ((C509RSASubjectPublicKey) keyInfo).modulus().bitLength();
+      return ofRSA(modulusBitLen);
+    } else {
+      return ofC509AlgorithmIdentifier(keyAlgId);
+    }
+  }
+
+  public static KeySpec ofC509AlgorithmIdentifier(int keyAlgId) {
+    switch (keyAlgId) {
+      case ConstPublicKeyAlgorithm.ec_secp256r1:
+        return KeySpec.P256;
+      case ConstPublicKeyAlgorithm.ec_secp384r1:
+        return KeySpec.P384;
+      case ConstPublicKeyAlgorithm.ec_secp521r1:
+        return KeySpec.P521;
+      case ConstPublicKeyAlgorithm.ec_sm2p256v1:
+        return KeySpec.SM2;
+      case ConstPublicKeyAlgorithm.x25519:
+        return KeySpec.X25519;
+      case ConstPublicKeyAlgorithm.x448:
+        return KeySpec.X448;
+      case ConstPublicKeyAlgorithm.ed25519:
+        return KeySpec.ED25519;
+      case ConstPublicKeyAlgorithm.ed448:
+        return KeySpec.ED448;
+      case ConstPublicKeyAlgorithm.ec_brainpoolP256r1:
+        return KeySpec.BRAINPOOLP256R1;
+      case ConstPublicKeyAlgorithm.ec_brainpoolP384r1:
+        return KeySpec.BRAINPOOLP384R1;
+      case ConstPublicKeyAlgorithm.ec_brainpoolP512r1:
+        return KeySpec.BRAINPOOLP512R1;
+      case ConstPublicKeyAlgorithm.ML_DSA_44:
+        return KeySpec.MLDSA44;
+      case ConstPublicKeyAlgorithm.ML_DSA_65:
+        return KeySpec.MLDSA65;
+      case ConstPublicKeyAlgorithm.ML_DSA_87:
+        return KeySpec.MLDSA87;
+      case ConstPublicKeyAlgorithm.ML_KEM_512:
+        return KeySpec.MLKEM512;
+      case ConstPublicKeyAlgorithm.ML_KEM_768:
+        return KeySpec.MLKEM768;
+      case ConstPublicKeyAlgorithm.ML_KEM_1024:
+        return KeySpec.MLKEM1024;
+      default:
+        return null;
+    }
   }
 
   public static KeySpec ofRSA(int modulusBitLength) {

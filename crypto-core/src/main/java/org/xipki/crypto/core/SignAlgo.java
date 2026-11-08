@@ -15,6 +15,7 @@ import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
 import org.xipki.codec.asn1.oid.CurveOIDs;
 import org.xipki.codec.asn1.oid.XipkiOIDs;
+import org.xipki.codec.c509.ConstSignatureAlgorithm;
 import org.xipki.crypto.core.composite.CompositeMLDSAPrivateKey;
 import org.xipki.crypto.core.composite.CompositeMLDSAPublicKey;
 import org.xipki.crypto.core.composite.CompositeSigSuite;
@@ -51,88 +52,97 @@ import static org.xipki.crypto.core.HashAlgo.*;
 public enum SignAlgo {
 
   // RSA PKCS#1v1.5
-  RSA_SHA1("SHA1WITHRSA",  0x01, AlgorithmOIDs.sha1WithRSAEncryption, SHA1, true),
-  RSA_SHA224("SHA224WITHRSA", 0x02, AlgorithmOIDs.sha224WithRSAEncryption, SHA224, true),
-  RSA_SHA256("SHA256WITHRSA", 0x03, AlgorithmOIDs.sha256WithRSAEncryption, SHA256, true),
-  RSA_SHA384("SHA384WITHRSA", 0x04, AlgorithmOIDs.sha384WithRSAEncryption, SHA384, true),
-  RSA_SHA512("SHA512WITHRSA", 0x05, AlgorithmOIDs.sha512WithRSAEncryption, SHA512, true),
+  RSA_SHA1("SHA1WITHRSA", 0x01,
+      AlgorithmOIDs.sha1WithRSAEncryption, ConstSignatureAlgorithm.sha1WithRSAEncryption,
+      SHA1, true),
+  RSA_SHA224("SHA224WITHRSA", 0x02, AlgorithmOIDs.sha224WithRSAEncryption, null, SHA224, true),
+  RSA_SHA256("SHA256WITHRSA", 0x03,
+      AlgorithmOIDs.sha256WithRSAEncryption, ConstSignatureAlgorithm.sha256WithRSAEncryption,
+      SHA256, true),
+  RSA_SHA384("SHA384WITHRSA", 0x04,
+      AlgorithmOIDs.sha384WithRSAEncryption, ConstSignatureAlgorithm.sha384WithRSAEncryption,
+      SHA384, true),
+  RSA_SHA512("SHA512WITHRSA", 0x05,
+      AlgorithmOIDs.sha512WithRSAEncryption, ConstSignatureAlgorithm.sha512WithRSAEncryption,
+      SHA512, true),
 
   RSA_SHA3_224("SHA3-224WITHRSA", 0x06,
-      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_224, SHA3_224, true),
+      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_224, null, SHA3_224, true),
   RSA_SHA3_256("SHA3-256WITHRSA", 0x07,
-      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_256, SHA3_256, true),
+      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_256, null, SHA3_256, true),
   RSA_SHA3_384("SHA3-384WITHRSA", 0x08,
-      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_384, SHA3_384, true),
+      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_384, null, SHA3_384, true),
   RSA_SHA3_512("SHA3-512WITHRSA", 0x09,
-      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_512, SHA3_512, true),
+      AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_512, null, SHA3_512, true),
 
   // RSA PSS with MGF1
-  RSAPSS_SHA1  ("SHA1WITHRSAANDMGF1",   0x11, SHA1),
-  RSAPSS_SHA224("SHA224WITHRSAANDMGF1", 0x12, SHA224),
-  RSAPSS_SHA256("SHA256WITHRSAANDMGF1", 0x13, SHA256),
-  RSAPSS_SHA384("SHA384WITHRSAANDMGF1", 0x14, SHA384),
-  RSAPSS_SHA512("SHA512WITHRSAANDMGF1", 0x15, SHA512),
+  RSAPSS_SHA1  ("SHA1WITHRSAANDMGF1",   0x11, SHA1, null),
+  RSAPSS_SHA224("SHA224WITHRSAANDMGF1", 0x12, SHA224, null),
+  RSAPSS_SHA256("SHA256WITHRSAANDMGF1", 0x13, SHA256, ConstSignatureAlgorithm.rsassa_pss_sha256),
+  RSAPSS_SHA384("SHA384WITHRSAANDMGF1", 0x14, SHA384, ConstSignatureAlgorithm.rsassa_pss_sha384),
+  RSAPSS_SHA512("SHA512WITHRSAANDMGF1", 0x15, SHA512, ConstSignatureAlgorithm.rsassa_pss_sha512),
 
-  RSAPSS_SHA3_224("SHA3-224WITHRSAANDMGF1", 0x16, SHA3_224),
-  RSAPSS_SHA3_256("SHA3-256WITHRSAANDMGF1", 0x17, SHA3_256),
-  RSAPSS_SHA3_384("SHA3-384WITHRSAANDMGF1", 0x18, SHA3_384),
-  RSAPSS_SHA3_512("SHA3-512WITHRSAANDMGF1", 0x19, SHA3_512),
+  RSAPSS_SHA3_224("SHA3-224WITHRSAANDMGF1", 0x16, SHA3_224, null),
+  RSAPSS_SHA3_256("SHA3-256WITHRSAANDMGF1", 0x17, SHA3_256, null),
+  RSAPSS_SHA3_384("SHA3-384WITHRSAANDMGF1", 0x18, SHA3_384, null),
+  RSAPSS_SHA3_512("SHA3-512WITHRSAANDMGF1", 0x19, SHA3_512, null),
 
   // RSA PSS with SHAKE
 
   RSAPSS_SHAKE128("SHAKE128WITHRSAPSS", 0x1A,
-      AlgorithmOIDs.id_RSASSA_PSS_SHAKE128, SHAKE128, false),
+      AlgorithmOIDs.id_RSASSA_PSS_SHAKE128, ConstSignatureAlgorithm.rsassa_pss_shake128,
+      SHAKE128, false),
   RSAPSS_SHAKE256("SHAKE256WITHRSAPSS", 0x1B,
-      AlgorithmOIDs.id_RSASSA_PSS_SHAKE256, SHAKE256, false),
+      AlgorithmOIDs.id_RSASSA_PSS_SHAKE256, ConstSignatureAlgorithm.rsassa_pss_shake256,
+      SHAKE256, false),
 
   // ECDSA
-  ECDSA_SHA1("SHA1WITHECDSA",     0x31, AlgorithmOIDs.ecdsa_with_SHA1,   SHA1,   false),
-  ECDSA_SHA224("SHA224WITHECDSA", 0x32, AlgorithmOIDs.ecdsa_with_SHA224, SHA224, false),
-  ECDSA_SHA256("SHA256WITHECDSA", 0x33, AlgorithmOIDs.ecdsa_with_SHA256, SHA256, false),
-  ECDSA_SHA384("SHA384WITHECDSA", 0x34, AlgorithmOIDs.ecdsa_with_SHA384, SHA384, false),
-  ECDSA_SHA512("SHA512WITHECDSA", 0x35, AlgorithmOIDs.ecdsa_with_SHA512, SHA512, false),
+  ECDSA_SHA1("SHA1WITHECDSA", 0x31,
+      AlgorithmOIDs.ecdsa_with_SHA1, ConstSignatureAlgorithm.ecdsa_with_SHA1, SHA1, false),
+  ECDSA_SHA224("SHA224WITHECDSA", 0x32, AlgorithmOIDs.ecdsa_with_SHA224, null, SHA224, false),
+  ECDSA_SHA256("SHA256WITHECDSA", 0x33,
+      AlgorithmOIDs.ecdsa_with_SHA256, ConstSignatureAlgorithm.ecdsa_with_SHA256, SHA256, false),
+  ECDSA_SHA384("SHA384WITHECDSA", 0x34,
+      AlgorithmOIDs.ecdsa_with_SHA384, ConstSignatureAlgorithm.ecdsa_with_SHA384, SHA384, false),
+  ECDSA_SHA512("SHA512WITHECDSA", 0x35,
+      AlgorithmOIDs.ecdsa_with_SHA512, ConstSignatureAlgorithm.ecdsa_with_SHA512, SHA512, false),
 
   ECDSA_SHA3_224("SHA3-224WITHECDSA", 0x36,
-      AlgorithmOIDs.id_ecdsa_with_sha3_224, SHA3_224, false),
+      AlgorithmOIDs.id_ecdsa_with_sha3_224, null, SHA3_224, false),
   ECDSA_SHA3_256("SHA3-256WITHECDSA", 0x37,
-      AlgorithmOIDs.id_ecdsa_with_sha3_256, SHA3_256, false),
+      AlgorithmOIDs.id_ecdsa_with_sha3_256, null, SHA3_256, false),
   ECDSA_SHA3_384("SHA3-384WITHECDSA", 0x38,
-      AlgorithmOIDs.id_ecdsa_with_sha3_384, SHA3_384, false),
+      AlgorithmOIDs.id_ecdsa_with_sha3_384, null, SHA3_384, false),
   ECDSA_SHA3_512("SHA3-512WITHECDSA", 0x39,
-      AlgorithmOIDs.id_ecdsa_with_sha3_512, SHA3_512, false),
+      AlgorithmOIDs.id_ecdsa_with_sha3_512, null, SHA3_512, false),
 
   // SM2
-  SM2_SM3("SM3WITHSM2", 0x3A, AlgorithmOIDs.sm2sign_with_sm3, SM3, false),
+  SM2_SM3("SM3WITHSM2", 0x3A,
+      AlgorithmOIDs.sm2sign_with_sm3, ConstSignatureAlgorithm.sm2_with_sm3, SM3, false),
 
   // ECDSA with SHAKE
   ECDSA_SHAKE128("SHAKE128WITHECDSA", 0x3B,
-      AlgorithmOIDs.id_ecdsa_with_shake128, SHAKE128, false),
+      AlgorithmOIDs.id_ecdsa_with_shake128, ConstSignatureAlgorithm.ecdsa_with_shake128,
+      SHAKE128, false),
   ECDSA_SHAKE256("SHAKE256WITHECDSA", 0x3C,
-      AlgorithmOIDs.id_ecdsa_with_shake256, SHAKE256, false),
+      AlgorithmOIDs.id_ecdsa_with_shake256, ConstSignatureAlgorithm.ecdsa_with_shake256,
+      SHAKE256, false),
 
   // EdDSA
-  ED25519("ED25519", 0x46, CurveOIDs.id_ED25519, null, false),
+  ED25519("ED25519", 0x46, CurveOIDs.id_ED25519, ConstSignatureAlgorithm.ed25519, null, false),
 
-  ED448("ED448", 0x47, CurveOIDs.id_ED448, null, false),
+  ED448("ED448", 0x47, CurveOIDs.id_ED448, ConstSignatureAlgorithm.ed448, null, false),
 
   // HMAC
-  HMAC_SHA1("HMACSHA1",     0x51, AlgorithmOIDs.id_hmacWithSHA1,   SHA1, true),
-  HMAC_SHA224("HMACSHA224", 0x52,
-      AlgorithmOIDs.id_hmacWithSHA224, SHA224, true),
-  HMAC_SHA256("HMACSHA256", 0x53,
-      AlgorithmOIDs.id_hmacWithSHA256, SHA256, true),
-  HMAC_SHA384("HMACSHA384", 0x54,
-      AlgorithmOIDs.id_hmacWithSHA384, SHA384, true),
-  HMAC_SHA512("HMACSHA512", 0x55,
-      AlgorithmOIDs.id_hmacWithSHA512, SHA512, true),
-  HMAC_SHA3_224("HMACSHA3-224", 0x56,
-      AlgorithmOIDs.id_hmacWithSHA3_224, SHA3_224, true),
-  HMAC_SHA3_256("HMACSHA3-256", 0x57,
-      AlgorithmOIDs.id_hmacWithSHA3_256, SHA3_256, true),
-  HMAC_SHA3_384("HMACSHA3-384", 0x58,
-      AlgorithmOIDs.id_hmacWithSHA3_384, SHA3_384, true),
-  HMAC_SHA3_512("HMACSHA3-512", 0x59,
-      AlgorithmOIDs.id_hmacWithSHA3_512, SHA3_512, true),
+  HMAC_SHA1("HMACSHA1", 0x51, AlgorithmOIDs.id_hmacWithSHA1, null, SHA1, true),
+  HMAC_SHA224("HMACSHA224", 0x52, AlgorithmOIDs.id_hmacWithSHA224, null, SHA224, true),
+  HMAC_SHA256("HMACSHA256", 0x53, AlgorithmOIDs.id_hmacWithSHA256, null, SHA256, true),
+  HMAC_SHA384("HMACSHA384", 0x54, AlgorithmOIDs.id_hmacWithSHA384, null, SHA384, true),
+  HMAC_SHA512("HMACSHA512", 0x55, AlgorithmOIDs.id_hmacWithSHA512, null, SHA512, true),
+  HMAC_SHA3_224("HMACSHA3-224", 0x56, AlgorithmOIDs.id_hmacWithSHA3_224, null, SHA3_224, true),
+  HMAC_SHA3_256("HMACSHA3-256", 0x57, AlgorithmOIDs.id_hmacWithSHA3_256, null, SHA3_256, true),
+  HMAC_SHA3_384("HMACSHA3-384", 0x58, AlgorithmOIDs.id_hmacWithSHA3_384, null, SHA3_384, true),
+  HMAC_SHA3_512("HMACSHA3-512", 0x59, AlgorithmOIDs.id_hmacWithSHA3_512, null, SHA3_512, true),
 
   // AES-GMAC
   // we ignore there the params of GMAC
@@ -142,66 +152,83 @@ public enum SignAlgo {
 
   //DHPOP-MAC
   DHPOP_X25519("DHPOP-X25519", 0x5A,
-      XipkiOIDs.id_alg_dhPop_x25519, SHA512, false),
+      XipkiOIDs.id_alg_dhPop_x25519, ConstSignatureAlgorithm.SIG_dhPop_x25519, SHA512, false),
   DHPOP_X448("DHPOP-X448", 0x5B,
-      XipkiOIDs.id_alg_dhPop_x448, SHA512, false),
+      XipkiOIDs.id_alg_dhPop_x448, ConstSignatureAlgorithm.SIG_dhPop_x448, SHA512, false),
 
   // MLDSA
-  MLDSA44("ML-DSA-44", 0x60, AlgorithmOIDs.id_ml_dsa_44, null, false),
-  MLDSA65("ML-DSA-65", 0x61, AlgorithmOIDs.id_ml_dsa_65, null, false),
-  MLDSA87("ML-DSA-87", 0x62, AlgorithmOIDs.id_ml_dsa_87, null, false),
+  MLDSA44("ML-DSA-44", 0x60,
+      AlgorithmOIDs.id_ml_dsa_44, ConstSignatureAlgorithm.ML_DSA_44, null, false),
+  MLDSA65("ML-DSA-65", 0x61,
+      AlgorithmOIDs.id_ml_dsa_65, ConstSignatureAlgorithm.ML_DSA_65, null, false),
+  MLDSA87("ML-DSA-87", 0x62,
+      AlgorithmOIDs.id_ml_dsa_87, ConstSignatureAlgorithm.ML_DSA_87, null, false),
 
   // KEM: decrypt the ciphertext using HPKE to get the shared secret key, using
   // it to compute the MAC value. The jceName KEM-AEW-GMAC is just a dummy
   // value.
-  KEM_HMAC_SHA256("KEM-HMAC-SHA256", 0x84,
-      XipkiOIDs.id_alg_KEM_HMAC_SHA256, null, false),
+  KEM_HMAC_SHA256("KEM-HMAC-SHA256", 0x84, XipkiOIDs.id_alg_KEM_HMAC_SHA256, null, null, false),
 
   // composite algorithms
   MLDSA44_RSA2048("MLDSA44-RSA2048-PSS-SHA256",
-      0x85, CompositeSigSuite.MLDSA44_RSA2048_PSS_SHA256),
+      0x85, CompositeSigSuite.MLDSA44_RSA2048_PSS_SHA256,
+      ConstSignatureAlgorithm.MLDSA44_RSA2048_PSS_SHA256),
 
   MLDSA44_ED25519("MLDSA44-Ed25519-SHA512",
-      0x86, CompositeSigSuite.MLDSA44_Ed25519_SHA512),
+      0x86, CompositeSigSuite.MLDSA44_Ed25519_SHA512,
+      ConstSignatureAlgorithm.MLDSA44_Ed25519_SHA512),
 
   MLDSA44_P256("MLDSA44-ECDSA-P256-SHA256",
-      0x87, CompositeSigSuite.MLDSA44_ECDSA_P256_SHA256),
+      0x87, CompositeSigSuite.MLDSA44_ECDSA_P256_SHA256,
+      ConstSignatureAlgorithm.MLDSA44_ECDSA_P256_SHA256),
 
   MLDSA65_RSA3072("MLDSA65-RSA3072-PSS-SHA512",
-      0x88, CompositeSigSuite.MLDSA65_RSA3072_PSS_SHA512),
+      0x88, CompositeSigSuite.MLDSA65_RSA3072_PSS_SHA512,
+      ConstSignatureAlgorithm.MLDSA65_RSA3072_PSS_SHA512),
 
   MLDSA65_RSA4096("MLDSA65-RSA4096-PSS-SHA512",
-      0x89, CompositeSigSuite.MLDSA65_RSA4096_PSS_SHA512),
+      0x89, CompositeSigSuite.MLDSA65_RSA4096_PSS_SHA512,
+      ConstSignatureAlgorithm.MLDSA65_RSA4096_PSS_SHA512),
 
   MLDSA65_P256("MLDSA65-ECDSA-P256-SHA512",
-      0x8a, CompositeSigSuite.MLDSA65_ECDSA_P256_SHA512),
+      0x8a, CompositeSigSuite.MLDSA65_ECDSA_P256_SHA512,
+      ConstSignatureAlgorithm.MLDSA65_ECDSA_P256_SHA512),
 
   MLDSA65_P384("MLDSA65-ECDSA-P384-SHA512",
-      0x8b, CompositeSigSuite.MLDSA65_ECDSA_P384_SHA512),
+      0x8b, CompositeSigSuite.MLDSA65_ECDSA_P384_SHA512,
+      ConstSignatureAlgorithm.MLDSA65_ECDSA_P384_SHA512),
 
   MLDSA65_BP256("MLDSA65-ECDSA-brainpoolP256r1-SHA512",
-      0x8c, CompositeSigSuite.MLDSA65_ECDSA_BP256_SHA512),
+      0x8c, CompositeSigSuite.MLDSA65_ECDSA_BP256_SHA512,
+      ConstSignatureAlgorithm.MLDSA65_ECDSA_brainpoolP256r1_SHA512),
 
   MLDSA65_ED25519("MLDSA65-Ed25519-SHA512",
-      0x8d, CompositeSigSuite.MLDSA65_Ed25519_SHA512),
+      0x8d, CompositeSigSuite.MLDSA65_Ed25519_SHA512,
+      ConstSignatureAlgorithm.MLDSA65_Ed25519_SHA512),
 
   MLDSA87_P384("MLDSA87-ECDSA-P384-SHA512",
-      0x8e, CompositeSigSuite.MLDSA87_ECDSA_P384_SHA512),
+      0x8e, CompositeSigSuite.MLDSA87_ECDSA_P384_SHA512,
+      ConstSignatureAlgorithm.MLDSA87_ECDSA_P384_SHA512),
 
   MLDSA87_BP384("MLDSA87-ECDSA-brainpoolP384r1-SHA512",
-      0x8f, CompositeSigSuite.MLDSA87_ECDSA_BP384_SHA512),
+      0x8f, CompositeSigSuite.MLDSA87_ECDSA_BP384_SHA512,
+      ConstSignatureAlgorithm.MLDSA87_ECDSA_brainpoolP384r1_SHA512),
 
   MLDSA87_ED448("MLDSA87-Ed448-SHAKE256",
-      0x90, CompositeSigSuite.MLDSA87_Ed448_SHAKE256),
+      0x90, CompositeSigSuite.MLDSA87_Ed448_SHAKE256,
+      ConstSignatureAlgorithm.MLDSA87_Ed448_SHAKE256),
 
   MLDSA87_RSA3072("MLDSA87-RSA3072-PSS-SHA512",
-      0x91, CompositeSigSuite.MLDSA87_RSA3072_PSS_SHA512),
+      0x91, CompositeSigSuite.MLDSA87_RSA3072_PSS_SHA512,
+      ConstSignatureAlgorithm.MLDSA87_RSA3072_PSS_SHA512),
 
   MLDSA87_RSA4096("MLDSA87-RSA4096-PSS-SHA512",
-      0x92, CompositeSigSuite.MLDSA87_RSA4096_PSS_SHA512),
+      0x92, CompositeSigSuite.MLDSA87_RSA4096_PSS_SHA512,
+      ConstSignatureAlgorithm.MLDSA87_RSA4096_PSS_SHA512),
 
   MLDSA87_P521("MLDSA87-ECDSA-P521-SHA512",
-      0x93, CompositeSigSuite.MLDSA87_ECDSA_P521_SHA512);
+      0x93, CompositeSigSuite.MLDSA87_ECDSA_P521_SHA512,
+      ConstSignatureAlgorithm.MLDSA87_ECDSA_P521_SHA512);
 
   private static final CryptoApi crypto = CryptoApiFactory.get();
 
@@ -214,6 +241,8 @@ public enum SignAlgo {
   private final Asn1Oid oid;
 
   private final AlgorithmIdentifier algId;
+
+  private final Integer c509AlgId;
 
   private final String jceName;
 
@@ -273,7 +302,7 @@ public enum SignAlgo {
     }
   }
 
-  SignAlgo(String jceName, int code, Asn1Oid oid,
+  SignAlgo(String jceName, int code, Asn1Oid oid, Integer c509AlgId,
           HashAlgo hashAlgo, boolean withNullParams) {
     this.code = (byte) Args.range(code, "code", 0, 255);
     this.jceName = jceName.toUpperCase();
@@ -282,10 +311,11 @@ public enum SignAlgo {
     this.compositeSigAlgoSuite = null;
     this.algId = withNullParams ? AlgorithmIdentifier.ofNullParams(this.oid)
                                 : new AlgorithmIdentifier(this.oid);
+    this.c509AlgId = c509AlgId;
   }
 
   // RSA PSS with MGF1
-  SignAlgo(String jceName, int code, HashAlgo hashAlgo) {
+  SignAlgo(String jceName, int code, HashAlgo hashAlgo, Integer c509AlgId) {
     this.code = (byte) Args.range(code, "code", 0, 255);
     this.jceName = jceName.toUpperCase();
     this.hashAlgo = hashAlgo;
@@ -298,6 +328,7 @@ public enum SignAlgo {
 
     this.oid = AlgorithmOIDs.id_RSASSA_PSS;
     this.algId = AlgorithmIdentifier.build(this.oid, params);
+    this.c509AlgId = c509AlgId;
     this.compositeSigAlgoSuite = null;
   }
 
@@ -331,17 +362,19 @@ public enum SignAlgo {
     // defined in BouncyCastle)
     GCMParameters params = new GCMParameters(new byte[nonceLen], tagLen);
     this.algId = AlgorithmIdentifier.build(oid, params);
+    this.c509AlgId = null;
     this.compositeSigAlgoSuite = null;
   }
 
   // Composite Signature
-  SignAlgo(String jceName, int code, CompositeSigSuite algoSuite) {
+  SignAlgo(String jceName, int code, CompositeSigSuite algoSuite, Integer c509AlgId) {
     this.code     = (byte) Args.range(code, "code", 0, 255);
     this.jceName  = jceName;
     this.algId    = algoSuite.algId();
     this.oid      = algoSuite.oid();
     this.hashAlgo = null;
     this.compositeSigAlgoSuite = algoSuite;
+    this.c509AlgId = c509AlgId;
   }
 
   public HashAlgo hashAlgo() {
@@ -366,6 +399,10 @@ public enum SignAlgo {
 
   public AlgorithmIdentifier algorithmIdentifier() {
     return algId;
+  }
+
+  public Integer c509AlgorithmIdentifier() {
+    return c509AlgId;
   }
 
   public Signature newSignature() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -448,7 +485,7 @@ public enum SignAlgo {
     return isHmac() || isGmac();
   }
 
-  public static SignAlgo getInstance(AlgorithmIdentifier algId)
+  public static SignAlgo ofAlgorithmIdentifier(AlgorithmIdentifier algId)
       throws NoSuchAlgorithmException {
     Asn1Oid oid = algId.getAlgorithm();
     Asn1Primitive params = algId.getParameters();
@@ -512,6 +549,17 @@ public enum SignAlgo {
     return rv;
   }
 
+  public static SignAlgo ofC509AlgorithmIdentifier(int algId) throws NoSuchAlgorithmException {
+    for (SignAlgo m : SignAlgo.values()) {
+      if (m.c509AlgId != null && m.c509AlgId == algId) {
+        return m;
+      }
+    }
+
+    throw new NoSuchAlgorithmException(
+        "found no algorithm " + ConstSignatureAlgorithm.getDesc(algId));
+  }
+
   /**
    * Returns the hash algorithm used together with the given signature algorithm, e.g. the
    * digest algorithm of the CMS signer, and of the certHash in CMP certConf (RFC 9481).
@@ -521,7 +569,7 @@ public enum SignAlgo {
    */
   public static HashAlgo getHashAlgo(AlgorithmIdentifier sigAlgId)
       throws NoSuchAlgorithmException {
-    SignAlgo signAlgo = getInstance(Args.notNull(sigAlgId, "sigAlgId"));
+    SignAlgo signAlgo = ofAlgorithmIdentifier(Args.notNull(sigAlgId, "sigAlgId"));
     if (signAlgo == null) {
       throw new NoSuchAlgorithmException(
           "unknown signature algorithm " + sigAlgId.getAlgorithm().getId());
@@ -544,7 +592,7 @@ public enum SignAlgo {
     }
   }
 
-  public static SignAlgo getInstance(String nameOrOid) throws NoSuchAlgorithmException {
+  public static SignAlgo ofName(String nameOrOid) throws NoSuchAlgorithmException {
     String key = nameOrOid.toUpperCase().replace("-", "");
     SignAlgo alg = map.get(key);
     return Optional.ofNullable(alg).orElseThrow(
@@ -594,7 +642,7 @@ public enum SignAlgo {
 
     if (keyspec.isCompositeMLDSA()) {
       try {
-        return SignAlgo.getInstance(keyspec.algorithmIdentifier());
+        return SignAlgo.ofAlgorithmIdentifier(keyspec.algorithmIdentifier());
       } catch (NoSuchAlgorithmException e) {
         return null;
       }
@@ -605,7 +653,7 @@ public enum SignAlgo {
     return null;
   }
 
-  public static SignAlgo getInstance(Key key) throws NoSuchAlgorithmException {
+  public static SignAlgo ofKey(Key key) throws NoSuchAlgorithmException {
     return getInstance(key, null, null, null);
   }
 
@@ -755,7 +803,7 @@ public enum SignAlgo {
       throw new NoSuchAlgorithmException("could not parse the encoded Key", e);
     }
 
-    SignAlgo allowedSignAlgo = SignAlgo.getInstance(algId);
+    SignAlgo allowedSignAlgo = SignAlgo.ofAlgorithmIdentifier(algId);
     if (allowedSignAlgo == null) {
       throw new NoSuchAlgorithmException("unknown key OID " + algId.getAlgorithm());
     }

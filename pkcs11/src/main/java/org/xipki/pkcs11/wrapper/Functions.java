@@ -8,6 +8,7 @@ import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.Asn1PrintableString;
 import org.xipki.codec.asn1.Asn1Tags;
 import org.xipki.codec.asn1.Asn1Utf8String;
+import org.xipki.codec.asn1.Asn1Util;
 import org.xipki.codec.util.BigIntegers;
 import org.xipki.codec.asn1.crypto.DssSigValue;
 import org.xipki.codec.exception.CodecException;
@@ -88,35 +89,6 @@ public class Functions {
       throw new IllegalStateException("error reading properties file " +
           propFile + ": " + t.getMessage());
     }
-  }
-
-  public static byte[] dsaSigPlainToX962(byte[] sig) {
-    if (sig.length % 2 != 0) {
-      // invalid format, just returns sig.
-      return sig;
-    }
-
-    int rOrSLen = sig.length / 2;
-    byte[] r = Arrays.copyOfRange(sig, 0, rOrSLen);
-    byte[] s = Arrays.copyOfRange(sig, rOrSLen, sig.length);
-    DssSigValue x962Sig = new DssSigValue(new BigInteger(1, r), new BigInteger(1, s));
-    return x962Sig.getEncoded();
-  }
-
-  public static byte[] dsaSigX962ToPlain(byte[] sig, int rOrSLen) {
-    DssSigValue x962Sig;
-    try {
-      x962Sig = DssSigValue.fromEncoded(sig);
-    } catch (Exception e) {
-      return sig;
-    }
-
-    BigInteger r = x962Sig.r();
-    BigInteger s = x962Sig.s();
-    byte[] res = new byte[2 * rOrSLen];
-    BigIntegers.asUnsignedByteArray(r, res, 0, rOrSLen);
-    BigIntegers.asUnsignedByteArray(s, res, rOrSLen, rOrSLen);
-    return res;
   }
 
   public static byte[] asUnsignedByteArray(BigInteger bn) {
@@ -338,7 +310,7 @@ public class Functions {
     if (sig.length == 2 * rOrSLen || sig[0] != 0x30) {
       return sig;
     }
-    return dsaSigX962ToPlain(sig, rOrSLen);
+    return Asn1Util.dsaSigX962ToPlain(sig, rOrSLen);
   }
 
   public static byte[] fixECParams(byte[] ecParams) {

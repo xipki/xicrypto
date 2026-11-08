@@ -3,7 +3,7 @@
 
 package org.xipki.codec.crypto;
 
-import org.xipki.codec.asn1.GenerationException;
+import org.xipki.codec.exception.GenerationException;
 import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
 
 import java.time.Instant;

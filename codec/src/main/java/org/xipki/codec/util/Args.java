@@ -382,6 +382,22 @@ public class Args {
     return argument;
   }
 
+  public static int[] notEmpty(int[] argument, String name) {
+    Objects.requireNonNull(argument, name + " may not be null");
+    if (argument.length == 0) {
+      throw new IllegalArgumentException(name + " may not be empty");
+    }
+    return argument;
+  }
+
+  public static long[] notEmpty(long[] argument, String name) {
+    Objects.requireNonNull(argument, name + " may not be null");
+    if (argument.length == 0) {
+      throw new IllegalArgumentException(name + " may not be empty");
+    }
+    return argument;
+  }
+
   public static Asn1OctetString notEmpty(Asn1OctetString argument, String name) {
     Objects.requireNonNull(argument, name + " may not be null");
     if (argument.getOctetsLength() == 0) {
@@ -450,12 +466,6 @@ public class Args {
   public static Asn1OctetString notEmptyBytes(Asn1OctetString argument, String name) {
     Objects.requireNonNull(argument, name + " may not be null");
     positive(argument.getOctetsLength(), name + ".length");
-    return argument;
-  }
-
-  public static int[] notEmptyInts(int[] argument, String name) {
-    Objects.requireNonNull(argument, name + " may not be null");
-    positive(argument.length, name + ".length");
     return argument;
   }
 

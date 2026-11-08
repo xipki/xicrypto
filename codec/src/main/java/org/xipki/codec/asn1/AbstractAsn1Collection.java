@@ -375,8 +375,7 @@ public abstract class AbstractAsn1Collection extends Asn1Primitive {
   private Asn1Primitive getObjectOfTaggedAt(int index, boolean explicit, int baseObjectTagNo)
       throws CodecException {
     if (explicit) {
-      return Asn1Decoder.rejectInvalidTextString(
-          getObjectOfExplicitTaggedAt(index), baseObjectTagNo);
+      return getTaggedAt(index).getExplicitBase(baseObjectTagNo);
     } else {
       // the implicit base is already checked by Asn1TaggedObject.getImplicitBase().
       return getObjectOfImplicitTaggedAt(index, baseObjectTagNo);

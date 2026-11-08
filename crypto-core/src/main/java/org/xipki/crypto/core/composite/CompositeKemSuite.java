@@ -103,7 +103,7 @@ public enum CompositeKemSuite {
     return null;
   }
 
-  public static CompositeKemSuite getAlgoSuite(Asn1Oid oid) {
+  public static CompositeKemSuite ofAlgOid(Asn1Oid oid) {
     for (CompositeKemSuite as : CompositeKemSuite.values()) {
       if (as.oid.equals(oid)) {
         return as;
@@ -112,13 +112,23 @@ public enum CompositeKemSuite {
     return null;
   }
 
-  public static CompositeKemSuite getAlgoSuite(AlgorithmIdentifier algId) {
+  public static CompositeKemSuite ofAlgId(AlgorithmIdentifier algId) {
     Asn1Primitive params = algId.getParameters();
     if (params != null && params != Asn1Null.INSTANCE) {
       return null;
     }
 
-    return getAlgoSuite(algId.getAlgorithm());
+    return ofAlgOid(algId.getAlgorithm());
+  }
+
+  public static CompositeKemSuite ofC509AlgId(int algId) {
+    for (CompositeKemSuite m : CompositeKemSuite.values()) {
+      Integer mId = m.keySpec.c509AlgId();
+      if (mId != null && mId == algId) {
+        return m;
+      }
+    }
+    return null;
   }
 
   public AlgorithmIdentifier algId() {

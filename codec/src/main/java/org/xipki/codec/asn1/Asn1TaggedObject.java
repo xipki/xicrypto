@@ -244,7 +244,7 @@ public class Asn1TaggedObject extends Asn1Primitive {
     return content.getExplicitBase();
   }
 
-  private Asn1Primitive getExplicitBase(int expectedTagNo) throws CodecException {
+  Asn1Primitive getExplicitBase(int expectedTagNo) throws CodecException {
     return Asn1Decoder.rejectInvalidTextString(
         content.getExplicitBase(expectedTagNo), expectedTagNo);
   }

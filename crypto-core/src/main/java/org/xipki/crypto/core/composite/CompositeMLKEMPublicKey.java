@@ -32,7 +32,7 @@ public class CompositeMLKEMPublicKey implements PublicKey {
 
   public CompositeMLKEMPublicKey(SubjectPublicKeyInfo publicKeyInfo)
       throws InvalidKeySpecException {
-    this.suite = CompositeKemSuite.getAlgoSuite(publicKeyInfo.getAlgorithm());
+    this.suite = CompositeKemSuite.ofAlgId(publicKeyInfo.getAlgorithm());
     Args.notNull(suite, "suite");
     this.keyValue = publicKeyInfo.subjectPublicKey();
     CompKemMlkemVariant pqcVariant = suite.pqcVariant();

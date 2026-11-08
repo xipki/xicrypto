@@ -3,7 +3,7 @@
 
 package org.xipki.codec.util;
 
-import org.xipki.codec.asn1.GenerationException;
+import org.xipki.codec.exception.GenerationException;
 
 /**
  * Reflective Util.

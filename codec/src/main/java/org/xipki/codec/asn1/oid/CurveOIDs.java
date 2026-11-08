@@ -42,4 +42,6 @@ public class CurveOIDs {
 
   public static final Asn1Oid brainpoolP512r1 = TeleTrustOIDs.brainpoolP512r1;
 
+  public static final Asn1Oid frp256v1 = OIDs.initOid("1.2.250.1.223.101.256.1", "frp256v1");
+
 }

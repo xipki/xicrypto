@@ -61,7 +61,7 @@ expansion), ML-KEM, AES-GCM/CBC/CTR and AES key wrap.
 
 **CMS / SCEP (RFC 8894):** RSA key transport can be decrypted (a CA or RA decrypts the SCEP
 request), but not encrypted: RSAES-PKCS1-v1_5, the default of SCEP, is not available, and
-RSA-OAEP works only through `WRAP_MODE`, while the CMS code of xipkix (`CmsCrypto`) encrypts in
+RSA-OAEP works only through `WRAP_MODE`, while the CMS code of xipki (`CmsCrypto`) encrypts in
 `ENCRYPT_MODE`. So enveloped data for an RSA recipient (e.g. the SCEP response) cannot be
 created with this backend.
 

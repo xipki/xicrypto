@@ -6,7 +6,7 @@ package org.xipki.crypto.core.composite;
 import org.xipki.crypto.core.KeySpec;
 
 /**
- * Comp Kem Trad Variant enumeration.
+ * Composite Kem Traditional Variant enumeration.
  *
  * @author Lijun Liao (xipki)
  */

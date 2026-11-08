@@ -202,8 +202,9 @@ public abstract class Asn1Decoder implements AutoCloseable {
         if (tagInfo.tagClass == TagClass.universal) {
           throw new CodecException("next object is not tagged as expected");
         }
-      } else if (tag != expectedTag) {
-        throw new CodecException("next object is "+ tag + ", but expected " + expectedTag);
+      } else if (tag != expectedTag || tagInfo.tagClass != TagClass.universal) {
+        throw new CodecException("next object is " + tagInfo.tagClass + " with tag " + tag +
+            ", but expected " + TagClass.universal + " with tag " + expectedTag);
       }
     }
 
@@ -368,6 +369,10 @@ public abstract class Asn1Decoder implements AutoCloseable {
 
   // starting point is the length
   private AbstractAsn1Collection readCollectionPrimitive(TagInfo tagInfo) throws CodecException {
+    if (!tagInfo.constructed) {
+      throw new CodecException("SEQUENCE or SET with constructed = false is not allowed");
+    }
+
     int len = readLength();
 
     List<Asn1Primitive> elements = new LinkedList<>();

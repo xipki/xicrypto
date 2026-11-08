@@ -6,6 +6,7 @@ package org.xipki.pkcs11.xihsm.objects;
 import org.xipki.codec.asn1.Asn1Integer;
 import org.xipki.codec.asn1.Asn1OctetString;
 import org.xipki.codec.asn1.Asn1Oid;
+import org.xipki.codec.asn1.Asn1Util;
 import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
 import org.xipki.codec.util.BigIntegers;
 import org.xipki.codec.asn1.crypto.ECPrivateKey;
@@ -107,7 +108,7 @@ public class XiWeierstrassECPrivateKey extends XiECPrivateKey {
     BigIntegers.asUnsignedByteArray(r, sig, 0, fieldByteSize);
     BigIntegers.asUnsignedByteArray(s, sig, fieldByteSize, fieldByteSize);
     if (vendor.hasSpecialBehaviour(SpecialBehaviour.ECDSA_X962_SIGNATURE)) {
-      sig = Functions.dsaSigPlainToX962(sig);
+      sig = Asn1Util.dsaSigPlainToX962(sig);
     }
     return sig;
   }

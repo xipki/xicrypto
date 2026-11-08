@@ -3,6 +3,7 @@
 
 package org.xipki.pkcs11.xihsm.objects;
 
+import org.xipki.codec.asn1.Asn1Util;
 import org.xipki.codec.util.BigIntegers;
 import org.xipki.codec.asn1.crypto.ECPrivateKey;
 import org.xipki.crypto.core.KeyInfoUtil;
@@ -128,7 +129,7 @@ public class XiSm2ECPrivateKey extends XiWeierstrassECPrivateKey {
     BigIntegers.asUnsignedByteArray(r, sig, 0, 32);
     BigIntegers.asUnsignedByteArray(s, sig, 32, 32);
     if (vendor.hasSpecialBehaviour(SpecialBehaviour.SM2_X962_SIGNATURE)) {
-      sig = Functions.dsaSigPlainToX962(sig);
+      sig = Asn1Util.dsaSigPlainToX962(sig);
     }
     return sig;
   }

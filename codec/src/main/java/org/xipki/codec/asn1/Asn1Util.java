@@ -3,12 +3,15 @@
 
 package org.xipki.codec.asn1;
 
+import org.xipki.codec.asn1.crypto.DssSigValue;
 import org.xipki.codec.util.Args;
 import org.xipki.codec.exception.CodecException;
+import org.xipki.codec.util.BigIntegers;
 
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.Arrays;
 
 /**
  * The ASN.1 utility class.
@@ -16,6 +19,35 @@ import java.time.Instant;
  * @author Lijun Liao (xipki)
  */
 public class Asn1Util {
+
+  public static byte[] dsaSigPlainToX962(byte[] sig) {
+    if (sig.length % 2 != 0) {
+      // invalid format, just returns sig.
+      return sig;
+    }
+
+    int rOrSLen = sig.length / 2;
+    byte[] r = Arrays.copyOfRange(sig, 0, rOrSLen);
+    byte[] s = Arrays.copyOfRange(sig, rOrSLen, sig.length);
+    DssSigValue x962Sig = new DssSigValue(new BigInteger(1, r), new BigInteger(1, s));
+    return x962Sig.getEncoded();
+  }
+
+  public static byte[] dsaSigX962ToPlain(byte[] sig, int rOrSLen) {
+    DssSigValue x962Sig;
+    try {
+      x962Sig = DssSigValue.fromEncoded(sig);
+    } catch (Exception e) {
+      return sig;
+    }
+
+    BigInteger r = x962Sig.r();
+    BigInteger s = x962Sig.s();
+    byte[] res = new byte[2 * rOrSLen];
+    BigIntegers.asUnsignedByteArray(r, res, 0, rOrSLen);
+    BigIntegers.asUnsignedByteArray(s, res, rOrSLen, rOrSLen);
+    return res;
+  }
 
   public static Asn1IA5String[] toIA5Strings(String... strings) {
     if (strings == null) {

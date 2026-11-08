@@ -9,7 +9,7 @@ import org.xipki.crypto.api.MlkemVariant;
 import org.xipki.crypto.core.KeySpec;
 
 /**
- * Comp Kem MLKEM Variant enumeration.
+ * Composite Kem MLKEM Variant enumeration.
  *
  * @author Lijun Liao (xipki)
  */

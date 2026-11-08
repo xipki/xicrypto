@@ -9,6 +9,8 @@ import org.xipki.codec.asn1.crypto.MlkemPrivateKey;
 import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
 import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
 import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.c509.C509BytesSubjectPublicKey;
+import org.xipki.codec.c509.ConstPublicKeyAlgorithm;
 import org.xipki.crypto.core.composite.CompositeKemSuite;
 import org.xipki.crypto.core.composite.CompositeKemUtil;
 import org.xipki.crypto.core.composite.CompositeMLKEMPrivateKey;
@@ -49,6 +51,54 @@ public class KemUtil {
     return new KemEncapKey(masterKey.alias(), kemEncryptSecret(spki, macKey));
   }
 
+  public static KemEncapKey generateKemEncapKey(
+      C509BytesSubjectPublicKey spki, SecretKeyWithAlias masterKey) throws XiSecurityException {
+    byte[] rawPkData = spki.publicKeyData();
+
+    // derive the MAC key
+    byte[] macKey = hmacDerive(masterKey.secretKey(), 32,
+        "XIPKI-KEM".getBytes(StandardCharsets.US_ASCII), rawPkData);
+    return new KemEncapKey(masterKey.alias(), kemEncryptSecret(spki, macKey));
+  }
+
+  public static KemEncapsulation kemEncryptSecret(C509BytesSubjectPublicKey spki, byte[] secret)
+      throws XiSecurityException {
+    int algId = spki.algorithm();
+
+    // Encapsulate a random key
+    byte alg;
+    SecretWithEncap skEncap;
+    if (ConstPublicKeyAlgorithm.ML_KEM_512 == algId ||
+        ConstPublicKeyAlgorithm.ML_KEM_768 == algId ||
+        ConstPublicKeyAlgorithm.ML_KEM_1024 == algId) {
+      alg = KemEncapsulation.ALG_KMAC_MLKEM_HMAC;
+
+      skEncap = cryptoApi.encapsulateKey(
+          MlkemVariant.fromC509PublicKeyAlg(algId), spki.publicKeyData());
+    } else {
+      CompositeKemSuite suite = CompositeKemSuite.ofC509AlgId(algId);
+      if (suite == null) {
+        throw new IllegalArgumentException("The given public key (spki) " +
+            "is neither an MLKEM nor a composite MLKEM key.");
+      }
+
+      alg = KemEncapsulation.ALG_KMAC_COMPOSITE_MLKEM_HMAC;
+      skEncap = CompositeKemUtil.encap(suite, spki.publicKeyData());
+    }
+
+    try {
+      Cipher cipher = cryptoApi.newCipher("AES/GCM/NoPadding");
+      cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(skEncap.secret(), "AES"),
+          // skEncap.getSecret() is always fresh, so we used here constant IV.
+          new GCMParameterSpec(128, new byte[12]));
+      byte[] encryptedSecret = cipher.doFinal(secret);
+
+      return new KemEncapsulation(alg, skEncap.encap(), encryptedSecret);
+    } catch (GeneralSecurityException e) {
+      throw new XiSecurityException(e);
+    }
+  }
+
   public static KemEncapsulation kemEncryptSecret(SubjectPublicKeyInfo spki, byte[] secret)
       throws XiSecurityException {
     AlgorithmIdentifier algId = spki.getAlgorithm();
@@ -64,7 +114,7 @@ public class KemUtil {
 
       skEncap = cryptoApi.encapsulateKey(MlkemVariant.fromOid(algOid), spki.subjectPublicKey());
     } else {
-      CompositeKemSuite suite = CompositeKemSuite.getAlgoSuite(algId);
+      CompositeKemSuite suite = CompositeKemSuite.ofAlgId(algId);
       if (suite == null) {
         throw new IllegalArgumentException("The given public key (spki) " +
             "is neither an MLKEM nor a composite MLKEM key.");
@@ -165,7 +215,7 @@ public class KemUtil {
       } catch (CodecException e) {
         throw new XiSecurityException("could not parse encoded PrivateKey", e);
       }
-      suite = CompositeKemSuite.getAlgoSuite(skInfo.getPrivateKeyAlgorithm());
+      suite = CompositeKemSuite.ofAlgId(skInfo.getPrivateKeyAlgorithm());
       if (suite == null) {
         throw new IllegalArgumentException("The given public key (spki) " +
             "is not an MLKEM or composite MLKEM key.");

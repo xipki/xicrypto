@@ -7,6 +7,7 @@ import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
+import org.xipki.codec.asn1.Asn1Util;
 import org.xipki.pkcs11.wrapper.ExtraParams;
 import org.xipki.pkcs11.wrapper.Functions;
 import org.xipki.pkcs11.wrapper.PKCS11KeyId;
@@ -153,7 +154,7 @@ public class ECDSASignRawDataTest {
         long generatedPublicKey = generatedKeyPair.getPublicKeyHandle();
         // verify with JCE
         jceVerifySignature("SHA256WithECDSA", generatedPublicKey, CKK_EC,
-            dataToBeSigned, Functions.dsaSigPlainToX962(signatureValue));
+            dataToBeSigned, Asn1Util.dsaSigPlainToX962(signatureValue));
 
         LOG.info("##################################################");
       }
