@@ -4,6 +4,7 @@
 package org.xipki.codec.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -142,6 +143,115 @@ public class IoUtil {
     String path = file.getPath();
     String expandedPath = expandFilepath(path);
     return path.equals(expandedPath) ? file : new File(expandedPath);
+  }
+
+  /**
+   * Resolves the path: a leading '~' is replaced by the user home directory, and a relative
+   * path is put under {@code basedir}. Without {@code basedir}, a relative path stays relative,
+   * i.e. to the working directory.
+   * @param basedir the base directory, may be {@code null}.
+   * @param path the path.
+   * @return the resolved path.
+   */
+  public static String resolvePath(String basedir, String path) {
+    String expandedPath = expandFilepath(path);
+    if (basedir == null || isAbsolutePath(expandedPath)) {
+      return expandedPath;
+    }
+
+    return Paths.get(basedir, expandedPath).toString();
+  }
+
+  /**
+   * Resolves the file, see {@link #resolvePath(String, String)}.
+   * @param basedir the base directory, may be {@code null}.
+   * @param file the file.
+   * @return the resolved file.
+   */
+  public static File resolvePath(String basedir, File file) {
+    String path = file.getPath();
+    String resolvedPath = resolvePath(basedir, path);
+    return path.equals(resolvedPath) ? file : new File(resolvedPath);
+  }
+
+  /**
+   * Reads the file. A relative path is resolved against {@code basedir}, see
+   * {@link #resolvePath(String, String)}.
+   * @param basedir the base directory, may be {@code null}.
+   * @param fileName the file name.
+   * @return the content of the file.
+   * @throws IOException if error occurs while reading the file.
+   */
+  public static byte[] read(String basedir, String fileName) throws IOException {
+    return read(resolvePath(basedir, fileName));
+  }
+
+  public static byte[] read(String basedir, File file) throws IOException {
+    return read(resolvePath(basedir, file));
+  }
+
+  public static void save(String basedir, String fileName, byte[] content) throws IOException {
+    save(basedir, new File(fileName), content);
+  }
+
+  public static void save(String basedir, File file, byte[] content) throws IOException {
+    save(resolvePath(basedir, file), content);
+  }
+
+  public static boolean deleteFile(String basedir, String path) {
+    return deleteFile(basedir, new File(path));
+  }
+
+  public static boolean deleteFile(String basedir, File file) {
+    return deleteFile(resolvePath(basedir, file));
+  }
+
+  public static boolean deleteDir(File dir) {
+    return deleteDir(null, dir);
+  }
+
+  /**
+   * Deletes the directory. A relative path is resolved against {@code basedir}.
+   * @param basedir the base directory, may be {@code null}.
+   * @param dir the directory.
+   * @return whether the directory has been deleted.
+   */
+  public static boolean deleteDir(String basedir, File dir) {
+    try {
+      deleteDirectory(resolvePath(basedir, dir));
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Closes the closable and ignores any exception.
+   * @param closable the closable, may be {@code null}.
+   */
+  public static void closeQuietly(Closeable closable) {
+    if (closable == null) {
+      return;
+    }
+
+    try {
+      closable.close();
+    } catch (Throwable th) {
+      // ignore
+    }
+  }
+
+  /**
+   * Read all bytes from the input stream and close the stream.
+   * The specified stream is closed after this method returns.
+   * @param in the input stream.
+   * @return the byte array contained in the input stream.
+   * @throws IOException if error occurs while reading the bytes.
+   */
+  public static byte[] readAllBytesAndClose(InputStream in) throws IOException {
+    try (in) {
+      return readAllBytes(in);
+    }
   }
 
   // Read last line of the file
