@@ -4,9 +4,9 @@
 package org.xipki.crypto.openssl;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
-import org.xipki.codec.asn1.oid.NistOIDs;
-import org.xipki.codec.asn1.oid.PkcsOIDs;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.x509.id.NistOIDs;
+import org.xipki.codec.x509.id.PkcsOIDs;
 import org.xipki.crypto.openssl.OpenSsl.Kind;
 
 import java.security.NoSuchAlgorithmException;
@@ -85,7 +85,7 @@ public final class OpensslProvider extends Provider {
 
   private void digest(String name, String opensslName, int xofLen, Object... aliases) {
     if (has(Kind.DIGEST, opensslName)) {
-      service("MessageDigest", name, () -> new OpensslDigest(opensslName, xofLen), aliases);
+      service("MessageDigest", name, () -> new OsslDigest(opensslName, xofLen), aliases);
     }
   }
 
@@ -120,37 +120,36 @@ public final class OpensslProvider extends Provider {
     boolean hasRsa = rsa != null && has(Kind.SIGNATURE, "RSA");
     boolean hasEcdsa = ec != null && has(Kind.SIGNATURE, "ECDSA");
 
-    // RSA PKCS#1 v1.5
-    Object[][] rsaAlgs = {
-        {"SHA1WITHRSA", "SHA1", AlgorithmOIDs.sha1WithRSAEncryption},
-        {"SHA224WITHRSA", "SHA2-224", AlgorithmOIDs.sha224WithRSAEncryption},
-        {"SHA256WITHRSA", "SHA2-256", AlgorithmOIDs.sha256WithRSAEncryption},
-        {"SHA384WITHRSA", "SHA2-384", AlgorithmOIDs.sha384WithRSAEncryption},
-        {"SHA512WITHRSA", "SHA2-512", AlgorithmOIDs.sha512WithRSAEncryption},
-        {"SHA3-224WITHRSA", "SHA3-224", AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_224},
-        {"SHA3-256WITHRSA", "SHA3-256", AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_256},
-        {"SHA3-384WITHRSA", "SHA3-384", AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_384},
-        {"SHA3-512WITHRSA", "SHA3-512", AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_512}};
-    for (Object[] a : rsaAlgs) {
-      if (hasRsa && has(Kind.DIGEST, (String) a[1])) {
-        NativeKey.SigOp op = OpensslSignature.Fixed.rsa((String) a[1]);
-        service("Signature", (String) a[0], () -> new OpensslSignature.Fixed(op, rsa), a[2]);
-      }
+    if (hasRsa) {
+      // RSA PKCS#1 v1.5
+      rsaSignature(rsa, "SHA1WITHRSA", "SHA1", AlgorithmOIDs.sha1WithRSAEncryption);
+      rsaSignature(rsa, "SHA224WITHRSA", "SHA2-224", AlgorithmOIDs.sha224WithRSAEncryption);
+      rsaSignature(rsa, "SHA256WITHRSA", "SHA2-256", AlgorithmOIDs.sha256WithRSAEncryption);
+      rsaSignature(rsa, "SHA384WITHRSA", "SHA2-384", AlgorithmOIDs.sha384WithRSAEncryption);
+      rsaSignature(rsa, "SHA512WITHRSA", "SHA2-512", AlgorithmOIDs.sha512WithRSAEncryption);
+      rsaSignature(rsa, "SHA3-224WITHRSA", "SHA3-224",
+          AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_224);
+      rsaSignature(rsa, "SHA3-256WITHRSA", "SHA3-256",
+          AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_256);
+      rsaSignature(rsa, "SHA3-384WITHRSA", "SHA3-384",
+          AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_384);
+      rsaSignature(rsa, "SHA3-512WITHRSA", "SHA3-512",
+          AlgorithmOIDs.id_rsassa_pkcs1_v1_5_with_sha3_512);
+
+      // RSA PSS, MGF1 with the same digest, salt length = digest length
+      rsaPssSignature(rsa, "SHA1", "SHA1");
+      rsaPssSignature(rsa, "SHA224", "SHA2-224");
+      rsaPssSignature(rsa, "SHA256", "SHA2-256");
+      rsaPssSignature(rsa, "SHA384", "SHA2-384");
+      rsaPssSignature(rsa, "SHA512", "SHA2-512");
+      rsaPssSignature(rsa, "SHA3-224", "SHA3-224");
+      rsaPssSignature(rsa, "SHA3-256", "SHA3-256");
+      rsaPssSignature(rsa, "SHA3-384", "SHA3-384");
+      rsaPssSignature(rsa, "SHA3-512", "SHA3-512");
     }
 
-    // RSA PSS, MGF1 with the same digest, salt length = digest length
-    String[][] pssAlgs = {{"SHA1", "SHA1"}, {"SHA224", "SHA2-224"}, {"SHA256", "SHA2-256"},
-        {"SHA384", "SHA2-384"}, {"SHA512", "SHA2-512"}, {"SHA3-224", "SHA3-224"},
-        {"SHA3-256", "SHA3-256"}, {"SHA3-384", "SHA3-384"}, {"SHA3-512", "SHA3-512"}};
-    for (String[] a : pssAlgs) {
-      if (hasRsa && has(Kind.DIGEST, a[1])) {
-        NativeKey.SigOp op = OpensslSignature.Fixed.rsaPss(a[1]);
-        service("Signature", a[0] + "WITHRSAANDMGF1",
-            () -> new OpensslSignature.Fixed(op, rsa), a[0] + "WITHRSA/PSS");
-      }
-    }
     if (hasRsa) {
-      service("Signature", "RSASSA-PSS", OpensslSignature.RsaPss::new,
+      service("Signature", "RSASSA-PSS", OsslSignature.RsaPss::new,
           "RSAPSS", AlgorithmOIDs.id_RSASSA_PSS);
     }
 
@@ -166,55 +165,50 @@ public final class OpensslProvider extends Provider {
       }
     }
 
-    // ECDSA
-    Object[][] ecdsaAlgs = {
-        {"SHA1WITHECDSA", "SHA1", AlgorithmOIDs.ecdsa_with_SHA1},
-        {"SHA224WITHECDSA", "SHA2-224", AlgorithmOIDs.ecdsa_with_SHA224},
-        {"SHA256WITHECDSA", "SHA2-256", AlgorithmOIDs.ecdsa_with_SHA256},
-        {"SHA384WITHECDSA", "SHA2-384", AlgorithmOIDs.ecdsa_with_SHA384},
-        {"SHA512WITHECDSA", "SHA2-512", AlgorithmOIDs.ecdsa_with_SHA512},
-        {"SHA3-224WITHECDSA", "SHA3-224", AlgorithmOIDs.id_ecdsa_with_sha3_224},
-        {"SHA3-256WITHECDSA", "SHA3-256", AlgorithmOIDs.id_ecdsa_with_sha3_256},
-        {"SHA3-384WITHECDSA", "SHA3-384", AlgorithmOIDs.id_ecdsa_with_sha3_384},
-        {"SHA3-512WITHECDSA", "SHA3-512", AlgorithmOIDs.id_ecdsa_with_sha3_512}};
-    for (Object[] a : ecdsaAlgs) {
-      if (hasEcdsa && has(Kind.DIGEST, (String) a[1])) {
-        NativeKey.SigOp op = OpensslSignature.Fixed.ecdsa((String) a[1]);
-        service("Signature", (String) a[0], () -> new OpensslSignature.Fixed(op, ec), a[2]);
-      }
+    if (hasEcdsa) {
+      ecdsaSignature(ec, "SHA1WITHECDSA", "SHA1", AlgorithmOIDs.ecdsa_with_SHA1);
+      ecdsaSignature(ec, "SHA224WITHECDSA", "SHA2-224", AlgorithmOIDs.ecdsa_with_SHA224);
+      ecdsaSignature(ec, "SHA256WITHECDSA", "SHA2-256", AlgorithmOIDs.ecdsa_with_SHA256);
+      ecdsaSignature(ec, "SHA384WITHECDSA", "SHA2-384", AlgorithmOIDs.ecdsa_with_SHA384);
+      ecdsaSignature(ec, "SHA512WITHECDSA", "SHA2-512", AlgorithmOIDs.ecdsa_with_SHA512);
+      ecdsaSignature(ec, "SHA3-224WITHECDSA", "SHA3-224", AlgorithmOIDs.id_ecdsa_with_sha3_224);
+      ecdsaSignature(ec, "SHA3-256WITHECDSA", "SHA3-256", AlgorithmOIDs.id_ecdsa_with_sha3_256);
+      ecdsaSignature(ec, "SHA3-384WITHECDSA", "SHA3-384", AlgorithmOIDs.id_ecdsa_with_sha3_384);
+      ecdsaSignature(ec, "SHA3-512WITHECDSA", "SHA3-512", AlgorithmOIDs.id_ecdsa_with_sha3_512);
     }
+
     // ECDSA with SHAKE is composed (the hash is signed): not in the FIPS mode, as in the backend
     // bc-fips, since it is not clear that the FIPS validation covers the signing of the hash
     boolean ecdsaShake = hasEcdsa && !OpenSsl.isFipsEnabled();
     if (ecdsaShake && has(Kind.DIGEST, "SHAKE128")) {
       service("Signature", "SHAKE128WITHECDSA",
-          () -> new OpensslSignature.EcdsaShake("SHAKE128"),
+          () -> new OsslSignature.EcdsaShake("SHAKE128"),
           AlgorithmOIDs.id_ecdsa_with_shake128);
     }
     if (ecdsaShake && has(Kind.DIGEST, "SHAKE256")) {
       service("Signature", "SHAKE256WITHECDSA",
-          () -> new OpensslSignature.EcdsaShake("SHAKE256"),
+          () -> new OsslSignature.EcdsaShake("SHAKE256"),
           AlgorithmOIDs.id_ecdsa_with_shake256);
     }
 
     // SM2
     if (keyTypes("SM2") != null && has(Kind.SIGNATURE, "SM2") && has(Kind.DIGEST, "SM3")) {
-      NativeKey.SigOp sm2 = OpensslSignature.Fixed.sm2();
-      service("Signature", "SM3WITHSM2", () -> new OpensslSignature.Fixed(sm2, "SM2"),
+      NativeKey.SigOp sm2 = OsslSignature.Fixed.sm2();
+      service("Signature", "SM3WITHSM2", () -> new OsslSignature.Fixed(sm2, "SM2"),
           "SM2WITHSM3", AlgorithmOIDs.sm2sign_with_sm3);
     }
 
     // EdDSA
     String[] eddsaTypes = signatureKeyTypes("ED25519", "ED448");
     if (eddsaTypes != null) {
-      NativeKey.SigOp eddsa = OpensslSignature.Fixed.eddsa();
-      service("Signature", "EdDSA", () -> new OpensslSignature.Fixed(eddsa, eddsaTypes));
+      NativeKey.SigOp eddsa = OsslSignature.Fixed.eddsa();
+      service("Signature", "EdDSA", () -> new OsslSignature.Fixed(eddsa, eddsaTypes));
       if (Arrays.asList(eddsaTypes).contains("ED25519")) {
-        service("Signature", "Ed25519", () -> new OpensslSignature.Fixed(eddsa, "ED25519"),
+        service("Signature", "Ed25519", () -> new OsslSignature.Fixed(eddsa, "ED25519"),
             AlgorithmOIDs.id_Ed25519);
       }
       if (Arrays.asList(eddsaTypes).contains("ED448")) {
-        service("Signature", "Ed448", () -> new OpensslSignature.Fixed(eddsa, "ED448"),
+        service("Signature", "Ed448", () -> new OsslSignature.Fixed(eddsa, "ED448"),
             AlgorithmOIDs.id_Ed448);
       }
     }
@@ -222,12 +216,43 @@ public final class OpensslProvider extends Provider {
     // ML-DSA
     String[] mldsa = signatureKeyTypes("ML-DSA-44", "ML-DSA-65", "ML-DSA-87");
     if (mldsa != null) {
-      service("Signature", "ML-DSA", () -> new OpensslSignature.Mldsa(mldsa));
-      for (String[] v : mldsaVariants()) {
-        if (Arrays.asList(mldsa).contains(v[0])) {
-          service("Signature", v[0], () -> new OpensslSignature.Mldsa(v[0]), v[1]);
-        }
-      }
+      service("Signature", "ML-DSA", () -> new OsslSignature.Mldsa(mldsa));
+      mldsaSignature(mldsa, "ML-DSA-44", NistOIDs.id_ml_dsa_44);
+      mldsaSignature(mldsa, "ML-DSA-65", NistOIDs.id_ml_dsa_65);
+      mldsaSignature(mldsa, "ML-DSA-87", NistOIDs.id_ml_dsa_87);
+    }
+  }
+
+  private void rsaSignature(String[] rsa, String name, String md, Asn1Oid oid) {
+    if (has(Kind.DIGEST, md)) {
+      NativeKey.SigOp op = OsslSignature.Fixed.rsa(md);
+      service("Signature", name, () -> new OsslSignature.Fixed(op, rsa), oid);
+    }
+  }
+
+  /**
+   * RSA PSS, MGF1 with the same digest, salt length = digest length.
+   * @param mdInName the digest in the algorithm name, e.g. "SHA256".
+   * @param md the digest in OpenSSL, e.g. "SHA2-256".
+   */
+  private void rsaPssSignature(String[] rsa, String mdInName, String md) {
+    if (has(Kind.DIGEST, md)) {
+      NativeKey.SigOp op = OsslSignature.Fixed.rsaPss(md);
+      service("Signature", mdInName + "WITHRSAANDMGF1",
+          () -> new OsslSignature.Fixed(op, rsa), mdInName + "WITHRSA/PSS");
+    }
+  }
+
+  private void ecdsaSignature(String[] ec, String name, String md, Asn1Oid oid) {
+    if (has(Kind.DIGEST, md)) {
+      NativeKey.SigOp op = OsslSignature.Fixed.ecdsa(md);
+      service("Signature", name, () -> new OsslSignature.Fixed(op, ec), oid);
+    }
+  }
+
+  private void mldsaSignature(String[] mldsa, String variant, Asn1Oid oid) {
+    if (Arrays.asList(mldsa).contains(variant)) {
+      service("Signature", variant, () -> new OsslSignature.Mldsa(variant), oid);
     }
   }
 
@@ -291,14 +316,15 @@ public final class OpensslProvider extends Provider {
 
     keyService("ML-DSA", OsslKeyPairGenerator.Family.MLDSA, null,
         keyTypes("ML-DSA-44", "ML-DSA-65", "ML-DSA-87"));
-    for (String[] v : mldsaVariants()) {
-      keyService(v[0], OsslKeyPairGenerator.Family.MLDSA, v[0], keyTypes(v[0]), v[1]);
-    }
+    variantKeyService(OsslKeyPairGenerator.Family.MLDSA, "ML-DSA-44", NistOIDs.id_ml_dsa_44);
+    variantKeyService(OsslKeyPairGenerator.Family.MLDSA, "ML-DSA-65", NistOIDs.id_ml_dsa_65);
+    variantKeyService(OsslKeyPairGenerator.Family.MLDSA, "ML-DSA-87", NistOIDs.id_ml_dsa_87);
     keyService("ML-KEM", OsslKeyPairGenerator.Family.MLKEM, null,
         keyTypes("ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"));
-    for (String[] v : mlkemVariants()) {
-      keyService(v[0], OsslKeyPairGenerator.Family.MLKEM, v[0], keyTypes(v[0]), v[1]);
-    }
+    variantKeyService(OsslKeyPairGenerator.Family.MLKEM, "ML-KEM-512", NistOIDs.id_ml_kem_512);
+    variantKeyService(OsslKeyPairGenerator.Family.MLKEM, "ML-KEM-768", NistOIDs.id_ml_kem_768);
+    variantKeyService(OsslKeyPairGenerator.Family.MLKEM, "ML-KEM-1024",
+        NistOIDs.id_ml_kem_1024);
 
     if (keyTypes("EC") != null && has(Kind.KEYEXCH, "ECDH")) {
       service("KeyAgreement", "ECDH", () -> new OsslKeyAgreement("EC"));
@@ -331,6 +357,14 @@ public final class OpensslProvider extends Provider {
         aliases);
   }
 
+  /**
+   * KeyFactory and KeyPairGenerator of one variant, e.g. ML-DSA-44.
+   */
+  private void variantKeyService(OsslKeyPairGenerator.Family family, String variant,
+                                 Asn1Oid oid) {
+    keyService(variant, family, variant, keyTypes(variant), oid);
+  }
+
   private void addSecrets() {
     service("KeyGenerator", "AES", () -> new OsslSecretSpis.KeyGen("AES", 256, 128, 192, 256));
     // DESede: 112 (two keys) and 168 (three keys) as in the JDK, 192 as alias of 168
@@ -340,43 +374,51 @@ public final class OpensslProvider extends Provider {
     }
 
     // HMAC keys: the default size is the output size of the digest
-    Object[][] hmacs = {{"HmacSHA1", "SHA1", 160}, {"HmacSHA224", "SHA2-224", 224},
-        {"HmacSHA256", "SHA2-256", 256}, {"HmacSHA384", "SHA2-384", 384},
-        {"HmacSHA512", "SHA2-512", 512}, {"HmacSHA3-224", "SHA3-224", 224},
-        {"HmacSHA3-256", "SHA3-256", 256}, {"HmacSHA3-384", "SHA3-384", 384},
-        {"HmacSHA3-512", "SHA3-512", 512}, {"HmacSM3", "SM3", 256}};
-    for (Object[] h : hmacs) {
-      String name = (String) h[0];
-      int bits = (Integer) h[2];
-      if (has(Kind.DIGEST, (String) h[1])) {
-        service("KeyGenerator", name, () -> new OsslSecretSpis.KeyGen(name, bits));
-      }
-    }
+    hmacKeyGenerator("HmacSHA1", "SHA1", 160);
+    hmacKeyGenerator("HmacSHA224", "SHA2-224", 224);
+    hmacKeyGenerator("HmacSHA256", "SHA2-256", 256);
+    hmacKeyGenerator("HmacSHA384", "SHA2-384", 384);
+    hmacKeyGenerator("HmacSHA512", "SHA2-512", 512);
+    hmacKeyGenerator("HmacSHA3-224", "SHA3-224", 224);
+    hmacKeyGenerator("HmacSHA3-256", "SHA3-256", 256);
+    hmacKeyGenerator("HmacSHA3-384", "SHA3-384", 384);
+    hmacKeyGenerator("HmacSHA3-512", "SHA3-512", 512);
+    hmacKeyGenerator("HmacSM3", "SM3", 256);
 
-    String[][] pbkdf2 = {{"SHA1", "SHA1"}, {"SHA224", "SHA2-224"}, {"SHA256", "SHA2-256"},
-        {"SHA384", "SHA2-384"}, {"SHA512", "SHA2-512"}, {"SHA512/224", "SHA2-512/224"},
-        {"SHA512/256", "SHA2-512/256"}, {"SHA3-224", "SHA3-224"}, {"SHA3-256", "SHA3-256"},
-        {"SHA3-384", "SHA3-384"}, {"SHA3-512", "SHA3-512"}, {"SM3", "SM3"}};
-    for (String[] p : pbkdf2) {
-      String name = "PBKDF2WithHmac" + p[0];
-      if (has(Kind.KDF, "PBKDF2") && has(Kind.DIGEST, p[1])) {
-        service("SecretKeyFactory", name, () -> new OsslSecretSpis.Pbkdf2(name, p[1]));
-      }
+    if (has(Kind.KDF, "PBKDF2")) {
+      pbkdf2("SHA1", "SHA1");
+      pbkdf2("SHA224", "SHA2-224");
+      pbkdf2("SHA256", "SHA2-256");
+      pbkdf2("SHA384", "SHA2-384");
+      pbkdf2("SHA512", "SHA2-512");
+      pbkdf2("SHA512/224", "SHA2-512/224");
+      pbkdf2("SHA512/256", "SHA2-512/256");
+      pbkdf2("SHA3-224", "SHA3-224");
+      pbkdf2("SHA3-256", "SHA3-256");
+      pbkdf2("SHA3-384", "SHA3-384");
+      pbkdf2("SHA3-512", "SHA3-512");
+      pbkdf2("SM3", "SM3");
     }
 
     service("SecureRandom", SECURE_RANDOM, OsslSecretSpis.Random::new);
   }
 
-  private static String[][] mldsaVariants() {
-    return new String[][]{{"ML-DSA-44", NistOIDs.id_ml_dsa_44.getId()},
-        {"ML-DSA-65", NistOIDs.id_ml_dsa_65.getId()},
-        {"ML-DSA-87", NistOIDs.id_ml_dsa_87.getId()}};
+  private void hmacKeyGenerator(String name, String md, int defaultBits) {
+    if (has(Kind.DIGEST, md)) {
+      service("KeyGenerator", name, () -> new OsslSecretSpis.KeyGen(name, defaultBits));
+    }
   }
 
-  private static String[][] mlkemVariants() {
-    return new String[][]{{"ML-KEM-512", NistOIDs.id_ml_kem_512.getId()},
-        {"ML-KEM-768", NistOIDs.id_ml_kem_768.getId()},
-        {"ML-KEM-1024", NistOIDs.id_ml_kem_1024.getId()}};
+  /**
+   * PBKDF2 with HMAC.
+   * @param mdInName the digest in the algorithm name, e.g. "SHA256".
+   * @param md the digest in OpenSSL, e.g. "SHA2-256".
+   */
+  private void pbkdf2(String mdInName, String md) {
+    if (has(Kind.DIGEST, md)) {
+      String name = "PBKDF2WithHmac" + mdInName;
+      service("SecretKeyFactory", name, () -> new OsslSecretSpis.Pbkdf2(name, md));
+    }
   }
 
   private static boolean has(Kind kind, String name) {

@@ -6,8 +6,9 @@ package org.xipki.crypto.core.composite;
 import org.xipki.codec.asn1.Asn1Null;
 import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.Asn1Primitive;
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.c509.id.ConstSignatureAlgorithm;
 import org.xipki.crypto.core.HashAlgo;
 import org.xipki.crypto.core.KeySpec;
 import org.xipki.crypto.core.SignAlgo;
@@ -122,14 +123,7 @@ public enum CompositeSigSuite {
     this.oid = oid;
 
     this.algId = new AlgorithmIdentifier(oid);
-    Integer c509AlgId = null;
-    try {
-      SignAlgo signAlgo = SignAlgo.ofAlgorithmIdentifier(algId);
-      c509AlgId = signAlgo.c509AlgorithmIdentifier();
-    } catch (NoSuchAlgorithmException e) {
-    }
-
-    this.c509AlgId = c509AlgId;
+    this.c509AlgId = ConstSignatureAlgorithm.codeForX509AlgId(algId.getEncoded());
     this.ph = ph;
     this.pqcVariant = pqcVariant;
     this.tradVariant = tradVariant;
@@ -212,6 +206,15 @@ public enum CompositeSigSuite {
     }
 
     return getAlgoSuite(algId.getAlgorithm());
+  }
+
+  public static CompositeSigSuite getAlgoSuiteForC509(int sigAlgId) {
+    for (CompositeSigSuite as : CompositeSigSuite.values()) {
+      if (as.c509AlgId != null && as.c509AlgId == sigAlgId) {
+        return as;
+      }
+    }
+    return null;
   }
 
 }

@@ -126,7 +126,7 @@ public class PKCS11Token {
 
   private PKCS11Token(Token token, boolean readOnly, SessionAuth auth, Integer numSessions)
       throws TokenException {
-    this.token = Objects.requireNonNull(token, "token shall not be null");
+    this.token = Args.notNull(token, "token");
     this.readOnly = readOnly;
     this.auth = Args.notNull(auth, "auth");
 

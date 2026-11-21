@@ -26,7 +26,7 @@ import org.xipki.pkcs11.xihsm.crypt.XiMechanism;
 import org.xipki.pkcs11.xihsm.util.HsmException;
 import org.xipki.pkcs11.xihsm.util.HsmStringUtil;
 import org.xipki.pkcs11.xihsm.util.StorageMode;
-import org.xipki.codec.ConfPairs;
+import org.xipki.codec.util.ConfPairs;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 

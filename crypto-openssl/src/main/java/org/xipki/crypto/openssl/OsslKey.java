@@ -128,6 +128,10 @@ abstract class OsslKey implements Key {
 
   @Override
   public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
     return obj instanceof OsslKey other && nativeKey.isPrivate() == other.nativeKey.isPrivate()
         && Arrays.equals(encoded, other.encoded);
   }

@@ -4,7 +4,7 @@
 package org.xipki.crypto.core.composite;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
 import org.xipki.crypto.api.MlkemVariant;
 import org.xipki.crypto.core.KeySpec;
 

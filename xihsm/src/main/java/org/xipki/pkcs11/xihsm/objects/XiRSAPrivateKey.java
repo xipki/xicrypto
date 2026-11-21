@@ -3,11 +3,11 @@
 
 package org.xipki.pkcs11.xihsm.objects;
 
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
+import org.xipki.codec.x509.AlgorithmIdentifier;
 import org.xipki.codec.util.BigIntegers;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.crypto.RSAPrivateKey;
-import org.xipki.codec.asn1.oid.PkcsOIDs;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.RSAPrivateKey;
+import org.xipki.codec.x509.id.PkcsOIDs;
 import org.xipki.codec.util.Args;
 import org.xipki.codec.util.XiArrays;
 import org.xipki.pkcs11.wrapper.PKCS11T;

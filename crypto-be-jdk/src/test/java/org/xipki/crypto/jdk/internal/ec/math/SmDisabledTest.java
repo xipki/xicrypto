@@ -6,7 +6,7 @@ package org.xipki.crypto.jdk.internal.ec.math;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
-import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.x509.id.CurveOIDs;
 import org.xipki.crypto.jdk.internal.Primitives;
 import org.xipki.crypto.jdk.internal.XiPKIProvider;
 

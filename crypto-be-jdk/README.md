@@ -13,7 +13,7 @@ FIPS), offered as library only.
   JDK 11+; use `crypto-be-bc` or `crypto-be-bc-fips` there.
 - Seed expansion of ML-DSA and ML-KEM, and the import of private keys containing the seed,
   need a JDK newer than 25 GA (see Limitations).
-- Runtime dependencies: `crypto-api` (and transitively `codec`).
+- Runtime dependencies: `crypto-api` (and transitively `crypto-codec`).
   No BouncyCastle.
 
 ## Usage

@@ -29,9 +29,9 @@ import org.bouncycastle.pqc.jcajce.spec.MLKEMParameterSpec;
 import org.bouncycastle.util.Properties;
 import org.xipki.codec.asn1.Asn1Encoding;
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
-import org.xipki.codec.asn1.oid.OIDs;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.id.OIDs;
 import org.xipki.codec.util.Args;
 import org.xipki.crypto.api.CryptoApi;
 import org.xipki.crypto.api.ECCurve;
@@ -56,7 +56,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * Crypto backend on BouncyCastle FIPS. The JCA objects come from BC-FIPS, and from BCPQC-FIPS
@@ -577,7 +576,7 @@ public class CryptoBcFips implements CryptoApi {
     private final org.bouncycastle.math.ec.ECCurve underlying;
 
     public ECCurveW(org.bouncycastle.math.ec.ECCurve underlying) {
-      this.underlying = Objects.requireNonNull(underlying, "underlying must not be null");
+      this.underlying = Args.notNull(underlying, "underlying");
     }
 
     @Override
@@ -602,7 +601,7 @@ public class CryptoBcFips implements CryptoApi {
     private final org.bouncycastle.math.ec.ECPoint underlying;
 
     public ECPointW(org.bouncycastle.math.ec.ECPoint underlying) {
-      this.underlying = Objects.requireNonNull(underlying, "underlying must not be null");
+      this.underlying = Args.notNull(underlying, "underlying");
     }
 
     @Override
@@ -642,7 +641,7 @@ public class CryptoBcFips implements CryptoApi {
     private final SecretWithEncapsulation underlying;
 
     public SecretWithEncapsulationW(SecretWithEncapsulation underlying) {
-      this.underlying = Objects.requireNonNull(underlying, "underlying must not be null");
+      this.underlying = Args.notNull(underlying, "underlying");
     }
 
     @Override

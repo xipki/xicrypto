@@ -5,7 +5,7 @@ package org.xipki.crypto.jdk.internal;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
 import org.xipki.crypto.jdk.internal.ec.XiECDSASignatureSpi;
 
 import java.security.InvalidParameterException;

@@ -4,8 +4,8 @@
 package org.xipki.crypto.jdk.internal;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
-import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.x509.id.CurveOIDs;
 import org.xipki.crypto.jdk.internal.digest.AesGmacSpi;
 import org.xipki.crypto.jdk.internal.digest.Shake;
 import org.xipki.crypto.jdk.internal.ec.XiECDSASignatureSpi;

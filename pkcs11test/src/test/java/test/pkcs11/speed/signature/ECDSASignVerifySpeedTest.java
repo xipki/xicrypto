@@ -11,7 +11,7 @@ import org.xipki.pkcs11.wrapper.TokenException;
 import org.xipki.pkcs11.wrapper.spec.PKCS11KeyPairSpec;
 import org.xipki.pkcs11.wrapper.spec.PKCS11KeyPairType;
 import org.xipki.pkcs11.wrapper.type.CkMechanism;
-import org.xipki.codec.speed.SpeedExecutor;
+import org.xipki.codec.util.speed.SpeedExecutor;
 import test.pkcs11.wrapper.TestBase;
 import test.pkcs11.wrapper.TestHSMs;
 

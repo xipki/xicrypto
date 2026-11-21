@@ -10,7 +10,7 @@ Cryptographic building blocks of [XiPKI](https://github.com/xipki/xipki): ASN.1/
 
 | Module             | Artifact                    | Description                                                                 |
 |--------------------|-----------------------------|-----------------------------------------------------------------------------|
-| `codec`            | `codec`                     | ASN.1 (DER/BER) and CBOR encoding and decoding, utilities.                  |
+| `crypto-codec`     | `crypto-codec`              | ASN.1 (DER/BER) and CBOR encoding and decoding, utilities.                  |
 | `crypto-api`       | `crypto-api`                | Backend-neutral crypto API (`CryptoApi`) and its loader `CryptoApiFactory`. |
 | `crypto-core`      | `crypto-core`               | Algorithm enums, key specs, KEM, composite signatures, PEM.                |
 | `crypto-be-jdk`    | `crypto-be-jdk`             | Backend based on the JDK providers. Requires JDK 25+.                       |

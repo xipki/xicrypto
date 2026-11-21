@@ -3,7 +3,9 @@
 
 package org.xipki.crypto.core.composite;
 
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
+import org.xipki.codec.c509.C509BytesSubjectPublicKey;
+import org.xipki.codec.c509.C509SubjectPublicKey;
 import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.crypto.core.KeySpec;
@@ -35,6 +37,27 @@ public class CompositeMLDSAPublicKey implements PublicKey {
     this.suite = CompositeSigSuite.getAlgoSuite(publicKeyInfo.getAlgorithm());
     Args.notNull(suite, "suite");
     this.keyValue = publicKeyInfo.subjectPublicKey();
+
+    CompSigMldsaVariant pqcVariant = suite.pqcVariant();
+
+    byte[] mlkemPk = Arrays.copyOfRange(keyValue, 0, pqcVariant.pkSize());
+    SubjectPublicKeyInfo pqcPkInfo = new SubjectPublicKeyInfo(
+        pqcVariant.keySpec().algorithmIdentifier(), mlkemPk);
+
+    int off = pqcVariant.pkSize();
+    byte[] tradPk  = Arrays.copyOfRange(keyValue, off, keyValue.length);
+    SubjectPublicKeyInfo tradPkInfo = new SubjectPublicKeyInfo(
+        suite.tradVariant().keySpec().algorithmIdentifier(), tradPk);
+
+    this.pqcKey = KeyInfoUtil.getPublicKey(pqcPkInfo);
+    this.tradKey = KeyInfoUtil.getPublicKey(tradPkInfo);
+  }
+
+  public CompositeMLDSAPublicKey(C509SubjectPublicKey publicKeyInfo)
+      throws InvalidKeySpecException {
+    this.suite = CompositeSigSuite.getAlgoSuiteForC509(publicKeyInfo.algorithm());
+    Args.notNull(suite, "suite");
+    this.keyValue = ((C509BytesSubjectPublicKey) publicKeyInfo).publicKeyData();
 
     CompSigMldsaVariant pqcVariant = suite.pqcVariant();
 

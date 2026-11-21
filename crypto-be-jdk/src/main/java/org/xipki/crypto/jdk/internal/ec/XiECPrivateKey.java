@@ -3,10 +3,10 @@
 
 package org.xipki.crypto.jdk.internal.ec;
 
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.crypto.ECPrivateKey;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.ECPrivateKey;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
 import org.xipki.crypto.jdk.internal.ec.math.EcCurve;
 
 import java.math.BigInteger;
@@ -123,7 +123,7 @@ final class XiECPrivateKey implements java.security.interfaces.ECPrivateKey {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == this) {
+    if (this == obj) {
       return true;
     }
     if (!(obj instanceof XiECPrivateKey) || destroyed) {

@@ -10,7 +10,7 @@ import org.xipki.codec.asn1.Asn1Tags;
 import org.xipki.codec.asn1.Asn1Utf8String;
 import org.xipki.codec.asn1.Asn1Util;
 import org.xipki.codec.util.BigIntegers;
-import org.xipki.codec.asn1.crypto.DssSigValue;
+import org.xipki.codec.x509.DssSigValue;
 import org.xipki.codec.exception.CodecException;
 import org.xipki.codec.Hex;
 import org.xipki.codec.json.JsonList;

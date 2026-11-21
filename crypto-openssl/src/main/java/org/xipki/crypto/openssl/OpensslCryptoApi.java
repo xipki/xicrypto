@@ -4,10 +4,10 @@
 package org.xipki.crypto.openssl;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
-import org.xipki.codec.asn1.oid.NistOIDs;
-import org.xipki.codec.asn1.oid.PkcsOIDs;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.id.NistOIDs;
+import org.xipki.codec.x509.id.PkcsOIDs;
 import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.api.AlgorithmNames;
 import org.xipki.crypto.api.CryptoApi;
@@ -276,7 +276,7 @@ public abstract class OpensslCryptoApi implements CryptoApi {
   public void setContext(Signature sig, byte[] context) throws InvalidAlgorithmParameterException {
     if (sig.getProvider() == provider() && sig.getAlgorithm().toUpperCase(Locale.ROOT)
         .startsWith("ML-DSA")) {
-      sig.setParameter(new OpensslSignature.ContextSpec(context));
+      sig.setParameter(new OsslSignature.ContextSpec(context));
     } else if (context != null && context.length > 0) {
       throw new InvalidAlgorithmParameterException(
           "signature context is not supported for " + sig.getAlgorithm());

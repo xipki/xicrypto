@@ -3,10 +3,10 @@
 
 package org.xipki.pkcs11.wrapper;
 
+import org.xipki.codec.util.Args;
 import org.xipki.pkcs11.wrapper.attrs.Template;
 
 import java.math.BigInteger;
-import java.util.Objects;
 
 /**
  * PKCS11 Key.
@@ -74,7 +74,7 @@ public class PKCS11Key {
   private final Long pqcVariant;
 
   PKCS11Key(PKCS11KeyId id, Template attrs) {
-    this.id = Objects.requireNonNull(id, "id must not be null");
+    this.id = Args.notNull(id, "id");
     // purposes
     this.decrypt = attrs.decrypt();
     this.encrypt = attrs.encrypt();

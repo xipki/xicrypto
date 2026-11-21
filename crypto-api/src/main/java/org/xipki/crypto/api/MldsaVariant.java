@@ -4,7 +4,7 @@
 package org.xipki.crypto.api;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.oid.NistOIDs;
+import org.xipki.codec.x509.id.NistOIDs;
 
 /**
  * @author Lijun Liao (xipki)

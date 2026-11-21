@@ -82,8 +82,8 @@ final class OsslKeyPairGenerator extends KeyPairGeneratorSpi {
         setCurve(curve);
         return;
       }
-      case EDDSA -> type = (keysize == 255) ? "ED25519" : (keysize == 448) ? "ED448" : null;
-      case XDH -> type = (keysize == 255) ? "X25519" : (keysize == 448) ? "X448" : null;
+      case EDDSA -> type = typeOfKeySize(keysize, "ED25519", "ED448");
+      case XDH -> type = typeOfKeySize(keysize, "X25519", "X448");
       default -> type = null;
     }
 
@@ -92,6 +92,20 @@ final class OsslKeyPairGenerator extends KeyPairGeneratorSpi {
     }
     keyType = type;
     params = new OsslParams();
+  }
+
+  /**
+   * Returns the key type of the Edwards / Montgomery curve with the key size.
+   * @return type255 for the key size 255, type448 for 448, otherwise null.
+   */
+  private static String typeOfKeySize(int keysize, String type255, String type448) {
+    if (keysize == 255) {
+      return type255;
+    } else if (keysize == 448) {
+      return type448;
+    } else {
+      return null;
+    }
   }
 
   @Override

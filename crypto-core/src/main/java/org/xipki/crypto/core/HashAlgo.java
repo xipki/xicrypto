@@ -6,12 +6,12 @@ package org.xipki.crypto.core;
 import org.xipki.codec.asn1.Asn1Null;
 import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.Asn1Primitive;
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.c509.id.ConstHashAlgorithm;
 import org.xipki.codec.util.Args;
 import org.xipki.codec.Base64;
 import org.xipki.codec.Hex;
-import org.xipki.crypto.api.CryptoApi;
 import org.xipki.crypto.api.CryptoApiFactory;
 
 import java.security.MessageDigest;
@@ -29,24 +29,24 @@ import java.util.Optional;
 //See https://www.itu.int/ITU-T/formal-language/itu-t/x/x509/2019/AlgorithmObjectIdentifiers.html
 public enum HashAlgo {
 
-  SHA1(20,     AlgorithmOIDs.id_sha1,     "SHA-1", true),
+  SHA1(20,     AlgorithmOIDs.id_sha1,     ConstHashAlgorithm.SHA1,    "SHA-1", true),
   // rfc5754: no parameters
-  SHA224(28,   AlgorithmOIDs.id_sha224,   "SHA-224"),
-  SHA256(32,   AlgorithmOIDs.id_sha256,   "SHA-256"),
-  SHA384(48,   AlgorithmOIDs.id_sha384,   "SHA-384"),
-  SHA512(64,   AlgorithmOIDs.id_sha512,   "SHA-512"),
-  SHA3_224(28, AlgorithmOIDs.id_sha3_224, "SHA3-224"),
-  SHA3_256(32, AlgorithmOIDs.id_sha3_256, "SHA3-256"),
-  SHA3_384(48, AlgorithmOIDs.id_sha3_384, "SHA3-384"),
-  SHA3_512(64, AlgorithmOIDs.id_sha3_512, "SHA3-512"),
-  SM3(32,      AlgorithmOIDs.id_sm3,      "SM3"),
+  SHA224(28,   AlgorithmOIDs.id_sha224,   null, "SHA-224"),
+  SHA256(32,   AlgorithmOIDs.id_sha256,   ConstHashAlgorithm.SHA256, "SHA-256"),
+  SHA384(48,   AlgorithmOIDs.id_sha384,   ConstHashAlgorithm.SHA384,  "SHA-384"),
+  SHA512(64,   AlgorithmOIDs.id_sha512,   ConstHashAlgorithm.SHA512,"SHA-512"),
+  SHA3_224(28, AlgorithmOIDs.id_sha3_224, null, "SHA3-224"),
+  SHA3_256(32, AlgorithmOIDs.id_sha3_256, null, "SHA3-256"),
+  SHA3_384(48, AlgorithmOIDs.id_sha3_384, null, "SHA3-384"),
+  SHA3_512(64, AlgorithmOIDs.id_sha3_512, null, "SHA3-512"),
+  SM3(32,      AlgorithmOIDs.id_sm3,      null, "SM3"),
 
-  SHAKE128(32, AlgorithmOIDs.id_shake128, "SHAKE128-256"),
-  SHAKE256(64, AlgorithmOIDs.id_shake256, "SHAKE256-512");
-
-  private static final CryptoApi crypto = CryptoApiFactory.get();
+  SHAKE128(32, AlgorithmOIDs.id_shake128, ConstHashAlgorithm.SHAKE128, "SHAKE128-256"),
+  SHAKE256(64, AlgorithmOIDs.id_shake256, ConstHashAlgorithm.SHAKE256, "SHAKE256-512");
 
   private static final Map<String, HashAlgo> map = new HashMap<>();
+
+  private static final Map<Integer, HashAlgo> c509AlgMap = new HashMap<>();
 
   private final int length;
 
@@ -56,6 +56,8 @@ public enum HashAlgo {
 
   private final AlgorithmIdentifier algIdWithNullParams;
 
+  private final Integer c509AlgId;
+
   private final String jceName;
 
   private final byte[] encoded;
@@ -64,6 +66,10 @@ public enum HashAlgo {
     for (HashAlgo type : HashAlgo.values()) {
       map.put(type.oid.getId(), type);
       map.put(type.jceName, type);
+
+      if (type.c509AlgId != null) {
+        c509AlgMap.put(type.c509AlgId, type);
+      }
     }
 
     map.put("SHA1",   SHA1);
@@ -79,13 +85,14 @@ public enum HashAlgo {
     map.put("SHAKE256", SHAKE256);
   }
 
-  HashAlgo(int length, Asn1Oid oid, String jceName) {
-    this(length, oid, jceName, false);
+  HashAlgo(int length, Asn1Oid oid, Integer c509AlgId,String jceName) {
+    this(length, oid, c509AlgId, jceName, false);
   }
 
-  HashAlgo(int length, Asn1Oid oid, String jceName, boolean withNullParams) {
+  HashAlgo(int length, Asn1Oid oid, Integer c509AlgId, String jceName, boolean withNullParams) {
     this.length = length;
     this.oid = oid;
+    this.c509AlgId = c509AlgId;
     if (withNullParams) {
       this.algId = AlgorithmIdentifier.ofNullParams(this.oid);
       this.algIdWithNullParams = this.algId;
@@ -104,6 +111,10 @@ public enum HashAlgo {
 
   public Asn1Oid oid() {
     return oid;
+  }
+
+  public Integer c509AlgId() {
+    return c509AlgId;
   }
 
   public String jceName() {
@@ -137,6 +148,13 @@ public enum HashAlgo {
     HashAlgo alg = map.get(nameOrOid.toUpperCase());
     return Optional.ofNullable(alg).orElseThrow(
         () -> new NoSuchAlgorithmException("Found no HashAlgo for name/OID '" + nameOrOid + "'"));
+  }
+
+  public static HashAlgo getInstanceForC509Alg(int algId) throws NoSuchAlgorithmException {
+    HashAlgo alg = c509AlgMap.get(algId);
+    return Optional.ofNullable(alg).orElseThrow(
+        () -> new NoSuchAlgorithmException("Found no HashAlgo for C509 algorithm '"
+            + ConstHashAlgorithm.describe(algId) + "'"));
   }
 
   public static HashAlgo getInstanceForEncoded(byte[] encoded) throws NoSuchAlgorithmException {
@@ -176,7 +194,7 @@ public enum HashAlgo {
 
   public MessageDigest createDigest() {
     try {
-      return crypto.newMessageDigest(jceName);
+      return CryptoApiFactory.get().newMessageDigest(jceName);
     } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
       throw new IllegalStateException("No MessageDigest algorithm " + jceName);
     }

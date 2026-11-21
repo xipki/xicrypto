@@ -3,9 +3,9 @@
 
 package org.xipki.crypto.jdk.internal.ec;
 
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
 import org.xipki.crypto.jdk.internal.ec.math.EcCurve;
 
 import java.security.KeyRep;
@@ -76,8 +76,11 @@ final class XiECPublicKey implements ECPublicKey {
 
   @Override
   public boolean equals(Object obj) {
-    return obj == this
-        || (obj instanceof XiECPublicKey && Arrays.equals(encoded, ((XiECPublicKey) obj).encoded));
+    if (this == obj) {
+      return true;
+    }
+
+    return obj instanceof XiECPublicKey && Arrays.equals(encoded, ((XiECPublicKey) obj).encoded);
   }
 
   @Override

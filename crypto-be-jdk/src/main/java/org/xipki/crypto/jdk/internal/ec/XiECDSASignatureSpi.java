@@ -3,7 +3,7 @@
 
 package org.xipki.crypto.jdk.internal.ec;
 
-import org.xipki.codec.asn1.crypto.DssSigValue;
+import org.xipki.codec.x509.DssSigValue;
 import org.xipki.crypto.jdk.internal.Primitives;
 import org.xipki.crypto.jdk.internal.XiSignatureSpi;
 import org.xipki.crypto.jdk.internal.ec.math.EcCurve;

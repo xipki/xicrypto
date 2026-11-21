@@ -4,8 +4,8 @@
 package org.xipki.crypto.jdk.internal;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
-import org.xipki.codec.asn1.oid.GmOIDs;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.x509.id.GmOIDs;
 import org.xipki.crypto.jdk.internal.digest.HmacSM3Spi;
 import org.xipki.crypto.jdk.internal.digest.SM3Digest;
 import org.xipki.crypto.jdk.internal.ec.SM2WITHSM3SignatureSpi;

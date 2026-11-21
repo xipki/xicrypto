@@ -48,8 +48,10 @@ final class OsslEcParameters implements X9ECParameters, ECCurve {
    */
   static OsslEcParameters of(Asn1Oid oid) {
     OsslCurves.Curve curve = OsslCurves.byName(oid.getId());
-    return (curve == null) ? null
-        : INSTANCES.computeIfAbsent(oid, k -> new OsslEcParameters(curve));
+    if (curve == null) {
+      return null;
+    }
+    return INSTANCES.computeIfAbsent(oid, k -> new OsslEcParameters(curve));
   }
 
   @Override

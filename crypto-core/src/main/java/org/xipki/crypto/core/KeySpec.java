@@ -4,21 +4,23 @@
 package org.xipki.crypto.core;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.crypto.RSAPublicKey;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
-import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.RSAPublicKey;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.x509.id.CurveOIDs;
 import org.xipki.codec.c509.C509RSASubjectPublicKey;
 import org.xipki.codec.c509.C509SubjectPublicKey;
-import org.xipki.codec.c509.ConstPublicKeyAlgorithm;
+import org.xipki.codec.c509.id.ConstPublicKeyAlgorithm;
 import org.xipki.codec.exception.CodecException;
 import org.xipki.crypto.core.composite.CompositeKemSuite;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Key Spec enumeration.
@@ -128,6 +130,17 @@ public enum KeySpec {
     MONTGOMERY,
     MLDSA,
     MLKEM
+  }
+
+  private static final Map<Integer, KeySpec> C509_ALG_ID_TO_SPEC = new HashMap<>();
+
+  static {
+    for (KeySpec spec : values()) {
+      if (spec.c509AlgId != null
+          && C509_ALG_ID_TO_SPEC.put(spec.c509AlgId, spec) != null) {
+        throw new ExceptionInInitializerError("duplicated C509 algorithm " + spec.c509AlgId);
+      }
+    }
   }
 
   private final String text;
@@ -344,45 +357,18 @@ public enum KeySpec {
     }
   }
 
+  /**
+   * Returns the KeySpec for the given C509 public key algorithm.
+   *
+   * <p>Covers every KeySpec with a C509 public key algorithm, including the composite ones.
+   * {@link ConstPublicKeyAlgorithm#rsaEncryption} returns {@code null}, because the modulus
+   * size is not part of the algorithm; use {@link #ofPublicKey(C509SubjectPublicKey)} instead.
+   *
+   * @param keyAlgId the C509 public key algorithm.
+   * @return the KeySpec, or {@code null} if there is no KeySpec for the algorithm.
+   */
   public static KeySpec ofC509AlgorithmIdentifier(int keyAlgId) {
-    switch (keyAlgId) {
-      case ConstPublicKeyAlgorithm.ec_secp256r1:
-        return KeySpec.P256;
-      case ConstPublicKeyAlgorithm.ec_secp384r1:
-        return KeySpec.P384;
-      case ConstPublicKeyAlgorithm.ec_secp521r1:
-        return KeySpec.P521;
-      case ConstPublicKeyAlgorithm.ec_sm2p256v1:
-        return KeySpec.SM2;
-      case ConstPublicKeyAlgorithm.x25519:
-        return KeySpec.X25519;
-      case ConstPublicKeyAlgorithm.x448:
-        return KeySpec.X448;
-      case ConstPublicKeyAlgorithm.ed25519:
-        return KeySpec.ED25519;
-      case ConstPublicKeyAlgorithm.ed448:
-        return KeySpec.ED448;
-      case ConstPublicKeyAlgorithm.ec_brainpoolP256r1:
-        return KeySpec.BRAINPOOLP256R1;
-      case ConstPublicKeyAlgorithm.ec_brainpoolP384r1:
-        return KeySpec.BRAINPOOLP384R1;
-      case ConstPublicKeyAlgorithm.ec_brainpoolP512r1:
-        return KeySpec.BRAINPOOLP512R1;
-      case ConstPublicKeyAlgorithm.ML_DSA_44:
-        return KeySpec.MLDSA44;
-      case ConstPublicKeyAlgorithm.ML_DSA_65:
-        return KeySpec.MLDSA65;
-      case ConstPublicKeyAlgorithm.ML_DSA_87:
-        return KeySpec.MLDSA87;
-      case ConstPublicKeyAlgorithm.ML_KEM_512:
-        return KeySpec.MLKEM512;
-      case ConstPublicKeyAlgorithm.ML_KEM_768:
-        return KeySpec.MLKEM768;
-      case ConstPublicKeyAlgorithm.ML_KEM_1024:
-        return KeySpec.MLKEM1024;
-      default:
-        return null;
-    }
+    return C509_ALG_ID_TO_SPEC.get(keyAlgId);
   }
 
   public static KeySpec ofRSA(int modulusBitLength) {

@@ -3,7 +3,7 @@
 
 package org.xipki.pkcs11.xihsm.objects;
 
-import org.xipki.codec.asn1.crypto.MldsaPrivateKey;
+import org.xipki.codec.x509.MldsaPrivateKey;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.codec.util.Args;
 import org.xipki.codec.exception.CodecException;

@@ -5,7 +5,7 @@ package org.xipki.pkcs11.xihsm.crypt;
 
 import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.Asn1PrintableString;
-import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.x509.id.CurveOIDs;
 import org.xipki.codec.Hex;
 import org.xipki.crypto.api.CryptoApi;
 import org.xipki.crypto.api.CryptoApiFactory;

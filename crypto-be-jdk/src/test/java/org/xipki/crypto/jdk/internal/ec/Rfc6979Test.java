@@ -16,7 +16,7 @@ import org.bouncycastle.asn1.teletrust.TeleTrusTNamedCurves;
 import org.bouncycastle.crypto.Digest;
 import org.junit.Assert;
 import org.junit.Test;
-import org.xipki.codec.asn1.crypto.DssSigValue;
+import org.xipki.codec.x509.DssSigValue;
 import org.xipki.crypto.jdk.internal.Primitives;
 import org.xipki.crypto.jdk.internal.XiPKIProvider;
 import org.xipki.crypto.jdk.internal.ec.math.EcCurve;

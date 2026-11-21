@@ -4,7 +4,7 @@
 package org.xipki.crypto.openssl;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.x509.id.CurveOIDs;
 
 import java.lang.foreign.MemorySegment;
 import java.math.BigInteger;

@@ -4,13 +4,13 @@
 package org.xipki.crypto.core;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.crypto.MlkemPrivateKey;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.MlkemPrivateKey;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
 import org.xipki.codec.c509.C509BytesSubjectPublicKey;
-import org.xipki.codec.c509.ConstPublicKeyAlgorithm;
+import org.xipki.codec.c509.id.ConstPublicKeyAlgorithm;
 import org.xipki.crypto.core.composite.CompositeKemSuite;
 import org.xipki.crypto.core.composite.CompositeKemUtil;
 import org.xipki.crypto.core.composite.CompositeMLKEMPrivateKey;

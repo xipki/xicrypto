@@ -4,9 +4,9 @@
 package org.xipki.crypto.core.composite;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.crypto.MldsaPrivateKey;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
+import org.xipki.codec.x509.MldsaPrivateKey;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
 import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.crypto.core.KeySpec;

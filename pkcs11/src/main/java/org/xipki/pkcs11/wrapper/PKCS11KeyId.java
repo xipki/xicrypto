@@ -105,8 +105,11 @@ public class PKCS11KeyId {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj) return true;
-    else if (!(obj instanceof PKCS11KeyId)) return false;
+    if (this == obj) {
+      return true;
+    }
+
+    if (!(obj instanceof PKCS11KeyId)) return false;
 
     PKCS11KeyId other = (PKCS11KeyId) obj;
     return handle == other.handle && Arrays.equals(id, other.id)

@@ -4,11 +4,11 @@
 package org.xipki.crypto.api;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.oid.GmOIDs;
-import org.xipki.codec.asn1.oid.IanaOIDs;
-import org.xipki.codec.asn1.oid.NistOIDs;
-import org.xipki.codec.asn1.oid.OiwOIDs;
-import org.xipki.codec.asn1.oid.PkcsOIDs;
+import org.xipki.codec.x509.id.GmOIDs;
+import org.xipki.codec.x509.id.IanaOIDs;
+import org.xipki.codec.x509.id.NistOIDs;
+import org.xipki.codec.x509.id.OiwOIDs;
+import org.xipki.codec.x509.id.PkcsOIDs;
 
 import java.util.HashMap;
 import java.util.Map;

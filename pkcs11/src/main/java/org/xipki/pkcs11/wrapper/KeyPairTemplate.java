@@ -3,6 +3,7 @@
 
 package org.xipki.pkcs11.wrapper;
 
+import org.xipki.codec.util.Args;
 import org.xipki.pkcs11.wrapper.attrs.Template;
 
 import java.time.Instant;
@@ -30,8 +31,8 @@ public class KeyPairTemplate {
   }
 
   public KeyPairTemplate(Template privateKey, Template publicKey) {
-    this.privateKey = Objects.requireNonNull(privateKey, "privateKey must not be null");
-    this.publicKey = Objects.requireNonNull(publicKey, "publicKey must not be null");
+    this.privateKey = Args.notNull(privateKey, "privateKey");
+    this.publicKey = Args.notNull(publicKey, "publicKey");
     if (!Objects.equals(privateKey.keyType(), publicKey.keyType())) {
       throw new IllegalArgumentException("privateKey and publicKey do not have the same key type.");
     }

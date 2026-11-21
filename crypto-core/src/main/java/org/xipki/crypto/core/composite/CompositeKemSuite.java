@@ -6,9 +6,9 @@ package org.xipki.crypto.core.composite;
 import org.xipki.codec.asn1.Asn1Null;
 import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.Asn1Primitive;
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
-import org.xipki.codec.c509.ConstPublicKeyAlgorithm;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.c509.id.ConstPublicKeyAlgorithm;
 import org.xipki.crypto.core.KeySpec;
 
 import java.nio.charset.StandardCharsets;

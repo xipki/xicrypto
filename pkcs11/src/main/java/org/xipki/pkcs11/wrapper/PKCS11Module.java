@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.SecureRandom;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import static org.xipki.pkcs11.wrapper.PKCS11T.CKR_GENERAL_ERROR;
@@ -52,8 +51,8 @@ public class PKCS11Module {
   static {
     String version = null;
     try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(Objects.requireNonNull(
-            PKCS11Module.class.getResourceAsStream("version"))))) {
+        new InputStreamReader(Args.notNull(
+            PKCS11Module.class.getResourceAsStream("version"), "version")))) {
       version = reader.readLine();
     } catch (Exception ex) {
     }
@@ -244,7 +243,7 @@ public class PKCS11Module {
   }
 
   public byte[] prepareGcmIv(SecureRandom rnd) {
-    if (Objects.requireNonNull(getVendorEnum()) == VendorEnum.CLOUDHSM) {
+    if (Args.notNull(getVendorEnum(), "vendorEnum") == VendorEnum.CLOUDHSM) {
       return new byte[12];
     }
     byte[] bytes = new byte[12];

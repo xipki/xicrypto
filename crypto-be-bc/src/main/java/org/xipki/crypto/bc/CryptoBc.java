@@ -26,8 +26,9 @@ import org.bouncycastle.math.ec.rfc7748.X25519;
 import org.bouncycastle.math.ec.rfc7748.X448;
 import org.xipki.codec.asn1.Asn1Encoding;
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
+import org.xipki.codec.util.Args;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
 import org.xipki.crypto.api.CryptoApi;
 import org.xipki.crypto.api.ECCurve;
 import org.xipki.crypto.api.ECPoint;
@@ -48,7 +49,6 @@ import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * @author Lijun Liao (xipki)
@@ -433,7 +433,7 @@ public class CryptoBc implements CryptoApi {
     private final org.bouncycastle.math.ec.ECCurve underlying;
 
     public ECCurveW(org.bouncycastle.math.ec.ECCurve underlying) {
-      this.underlying = Objects.requireNonNull(underlying, "underlying must not be null");
+      this.underlying = Args.notNull(underlying, "underlying");
     }
 
     @Override
@@ -458,7 +458,7 @@ public class CryptoBc implements CryptoApi {
     private final org.bouncycastle.math.ec.ECPoint underlying;
 
     public ECPointW(org.bouncycastle.math.ec.ECPoint underlying) {
-      this.underlying = Objects.requireNonNull(underlying, "underlying must not be null");
+      this.underlying = Args.notNull(underlying, "underlying");
     }
 
     @Override
@@ -498,7 +498,7 @@ public class CryptoBc implements CryptoApi {
     private final SecretWithEncapsulation underlying;
 
     public SecretWithEncapsulationW(SecretWithEncapsulation underlying) {
-      this.underlying = Objects.requireNonNull(underlying, "underlying must not be null");
+      this.underlying = Args.notNull(underlying, "underlying");
     }
 
     @Override

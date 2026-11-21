@@ -23,7 +23,7 @@ import java.util.Arrays;
  *
  * @author Lijun Liao (xipki)
  */
-final class OsslRsaPssShake extends OpensslSignature {
+final class OsslRsaPssShake extends OsslSignature {
 
   /** System property to disable this algorithm, enabled by default. */
   static final String PROP_ENABLED = "xipki.openssl.rsaPssShake";

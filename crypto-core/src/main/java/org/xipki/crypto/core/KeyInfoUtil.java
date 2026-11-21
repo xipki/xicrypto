@@ -4,11 +4,12 @@
 package org.xipki.crypto.core;
 
 import org.xipki.codec.asn1.Asn1Oid;
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.c509.C509SubjectPublicKey;
 import org.xipki.codec.util.BigIntegers;
-import org.xipki.codec.asn1.crypto.PqcPrivateKey;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.PqcPrivateKey;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
 import org.xipki.codec.Hex;
 import org.xipki.codec.util.XiArrays;
 import org.xipki.crypto.api.CryptoApi;
@@ -166,6 +167,15 @@ public class KeyInfoUtil {
     }
 
     return cryptoApi.getPublicKey(pkInfo);
+  }
+
+
+  public static PublicKey getPublicKey(C509SubjectPublicKey pkInfo) throws InvalidKeySpecException {
+    if (CompositeKeyInfoConverter.supportsC509PublicKey(pkInfo.algorithm())) {
+      return CompositeKeyInfoConverter.generatePublic(pkInfo);
+    }
+
+    return cryptoApi.getPublicKey(pkInfo.toX509SubjectPublicKey());
   }
 
   /**

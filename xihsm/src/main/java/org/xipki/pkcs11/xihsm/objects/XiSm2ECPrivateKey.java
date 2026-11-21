@@ -5,7 +5,7 @@ package org.xipki.pkcs11.xihsm.objects;
 
 import org.xipki.codec.asn1.Asn1Util;
 import org.xipki.codec.util.BigIntegers;
-import org.xipki.codec.asn1.crypto.ECPrivateKey;
+import org.xipki.codec.x509.ECPrivateKey;
 import org.xipki.crypto.core.KeyInfoUtil;
 import org.xipki.codec.util.Args;
 import org.xipki.crypto.api.ECPoint;

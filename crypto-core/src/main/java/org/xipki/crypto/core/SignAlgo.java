@@ -7,15 +7,15 @@ import org.xipki.codec.asn1.Asn1Integer;
 import org.xipki.codec.asn1.Asn1Null;
 import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.asn1.Asn1Primitive;
-import org.xipki.codec.asn1.crypto.GCMParameters;
-import org.xipki.codec.asn1.crypto.AlgorithmIdentifier;
-import org.xipki.codec.asn1.crypto.PrivateKeyInfo;
-import org.xipki.codec.asn1.crypto.RSASSAPSSParams;
-import org.xipki.codec.asn1.crypto.SubjectPublicKeyInfo;
-import org.xipki.codec.asn1.oid.AlgorithmOIDs;
-import org.xipki.codec.asn1.oid.CurveOIDs;
-import org.xipki.codec.asn1.oid.XipkiOIDs;
-import org.xipki.codec.c509.ConstSignatureAlgorithm;
+import org.xipki.codec.x509.GCMParameters;
+import org.xipki.codec.x509.AlgorithmIdentifier;
+import org.xipki.codec.x509.PrivateKeyInfo;
+import org.xipki.codec.x509.RSASSAPSSParams;
+import org.xipki.codec.x509.SubjectPublicKeyInfo;
+import org.xipki.codec.x509.id.AlgorithmOIDs;
+import org.xipki.codec.x509.id.CurveOIDs;
+import org.xipki.codec.x509.id.XipkiOIDs;
+import org.xipki.codec.c509.id.ConstSignatureAlgorithm;
 import org.xipki.crypto.core.composite.CompositeMLDSAPrivateKey;
 import org.xipki.crypto.core.composite.CompositeMLDSAPublicKey;
 import org.xipki.crypto.core.composite.CompositeSigSuite;
@@ -230,8 +230,6 @@ public enum SignAlgo {
       0x93, CompositeSigSuite.MLDSA87_ECDSA_P521_SHA512,
       ConstSignatureAlgorithm.MLDSA87_ECDSA_P521_SHA512);
 
-  private static final CryptoApi crypto = CryptoApiFactory.get();
-
   private static final int TRAILER_FIELD_BC = 1;
 
   private static final Map<String, SignAlgo> map = new HashMap<>();
@@ -406,7 +404,7 @@ public enum SignAlgo {
   }
 
   public Signature newSignature() throws NoSuchAlgorithmException, NoSuchProviderException {
-    return crypto.newSignature(jceName);
+    return CryptoApiFactory.get().newSignature(jceName);
   }
 
   public boolean isECDSASigAlgo() {
@@ -540,7 +538,7 @@ public enum SignAlgo {
         }
       }
 
-      for (SignAlgo algo : values()) {
+      for (SignAlgo algo : SignAlgo.values()) {
         if (algo.oid.equals(oid)) {
           rv = algo;
         }
@@ -557,7 +555,7 @@ public enum SignAlgo {
     }
 
     throw new NoSuchAlgorithmException(
-        "found no algorithm " + ConstSignatureAlgorithm.getDesc(algId));
+        "found no algorithm " + ConstSignatureAlgorithm.describe(algId));
   }
 
   /**

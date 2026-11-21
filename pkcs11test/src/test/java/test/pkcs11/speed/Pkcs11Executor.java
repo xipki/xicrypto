@@ -4,7 +4,7 @@
 package test.pkcs11.speed;
 
 import org.slf4j.Logger;
-import org.xipki.codec.speed.SpeedExecutor;
+import org.xipki.codec.util.speed.SpeedExecutor;
 import org.xipki.pkcs11.wrapper.PKCS11KeyId;
 import org.xipki.pkcs11.wrapper.TokenException;
 import test.pkcs11.wrapper.TestHSMs;

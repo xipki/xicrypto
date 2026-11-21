@@ -5,7 +5,7 @@ package org.xipki.crypto.jdk.internal.ec.math;
 
 import org.xipki.codec.asn1.Asn1Oid;
 import org.xipki.codec.util.BigIntegers;
-import org.xipki.codec.asn1.oid.CurveOIDs;
+import org.xipki.codec.x509.id.CurveOIDs;
 
 import java.math.BigInteger;
 import java.security.spec.ECFieldFp;
