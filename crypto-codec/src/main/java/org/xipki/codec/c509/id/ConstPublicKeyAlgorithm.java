@@ -268,9 +268,10 @@ public final class ConstPublicKeyAlgorithm {
   }
 
   /**
-   * Returns the code for the name of the constant in this class (e.g. {@code ec_secp256r1}, also
-   * written as {@code ecsecp256r1} or {@code ec-secp256r1}; case, spaces, dashes and underscores are
-   * ignored), the registered name, or the decimal code.
+   * Returns the code for the name of the constant in this class (e.g.
+   * {@code ec_secp256r1}, also written as {@code ecsecp256r1} or
+   * {@code ec-secp256r1}; case, spaces, dashes and underscores are ignored),
+   * the registered name, or the decimal code.
    *
    * @param nameOrCode the name or the decimal code.
    * @return the code, or {@code null} if the name is unknown.

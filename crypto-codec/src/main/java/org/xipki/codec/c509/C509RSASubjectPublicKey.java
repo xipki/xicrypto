@@ -162,5 +162,4 @@ public class C509RSASubjectPublicKey extends C509SubjectPublicKey {
     return Objects.hash(modulus, publicExponent);
   }
 
-
 }

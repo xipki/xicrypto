@@ -142,7 +142,6 @@ public enum CompositeKemSuite {
     return keySpec.c509AlgId();
   }
 
-
   public CompKemMlkemVariant pqcVariant() {
     return pqcVariant;
   }

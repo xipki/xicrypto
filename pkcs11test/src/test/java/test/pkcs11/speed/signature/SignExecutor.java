@@ -15,7 +15,6 @@ import test.pkcs11.speed.Pkcs11Executor;
 import test.pkcs11.wrapper.TestBase;
 import test.pkcs11.wrapper.TestHSMs;
 
-
 /**
  * Sign executor base class.
  *

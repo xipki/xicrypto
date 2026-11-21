@@ -61,5 +61,4 @@ public class BytesSignatureValue extends SignatureValue {
     return Arrays.hashCode(value);
   }
 
-
 }

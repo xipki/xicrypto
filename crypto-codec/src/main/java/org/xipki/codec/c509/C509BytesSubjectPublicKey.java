@@ -76,5 +76,4 @@ public class C509BytesSubjectPublicKey extends C509SubjectPublicKey {
     return Objects.hash(algorithm, Arrays.hashCode(publicKeyData));
   }
 
-
 }

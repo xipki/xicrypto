@@ -169,7 +169,6 @@ public class KeyInfoUtil {
     return cryptoApi.getPublicKey(pkInfo);
   }
 
-
   public static PublicKey getPublicKey(C509SubjectPublicKey pkInfo) throws InvalidKeySpecException {
     if (CompositeKeyInfoConverter.supportsC509PublicKey(pkInfo.algorithm())) {
       return CompositeKeyInfoConverter.generatePublic(pkInfo);

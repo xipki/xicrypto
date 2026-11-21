@@ -151,7 +151,8 @@ public class C509KeyPair {
           copyEcCoordinate(w.getAffineY(), false, encodedW, fieldSize);
         }
 
-        C509ECSubjectPublicKey subjectPublicKey = new C509ECSubjectPublicKey(keyAlgorithm, encodedW);
+        C509ECSubjectPublicKey subjectPublicKey =
+            new C509ECSubjectPublicKey(keyAlgorithm, encodedW);
         return new C509KeyPair(keyPair.getPrivate(), keyPair.getPublic(), subjectPublicKey);
       }
       default:

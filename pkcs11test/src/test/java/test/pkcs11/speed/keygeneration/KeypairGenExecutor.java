@@ -12,7 +12,6 @@ import org.xipki.pkcs11.wrapper.type.CkMechanism;
 import test.pkcs11.speed.Pkcs11Executor;
 import test.pkcs11.wrapper.TestHSMs;
 
-
 /**
  * Keypair generation executor base class.
  *

@@ -309,8 +309,9 @@ public final class ConstSignatureAlgorithm {
   }
 
   /**
-   * Returns the code for the name of the constant in this class (e.g. {@code ecdsa_with_SHA256}, also
-   * written as {@code ecdsawithsha256} or {@code ecdsa-with-sha256}; case, spaces, dashes and underscores are
+   * Returns the code for the name of the constant in this class (e.g.
+   * {@code ecdsa_with_SHA256}, also written as {@code ecdsawithsha256} or
+   * {@code ecdsa-with-sha256}; case, spaces, dashes and underscores are
    * ignored), the registered name, or the decimal code.
    *
    * @param nameOrCode the name or the decimal code.

@@ -2,7 +2,6 @@
 // License Apache License 2.0
 package org.xipki.codec.util;
 
-
 /**
  * IPAddress Family.
  * https://www.iana.org/assignments/address-family-numbers/address-family-numbers.xhtml.

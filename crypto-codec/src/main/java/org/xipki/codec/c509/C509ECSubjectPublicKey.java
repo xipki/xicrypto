@@ -126,5 +126,4 @@ public class C509ECSubjectPublicKey extends C509SubjectPublicKey {
     return Objects.hash(algorithm, Arrays.hashCode(encodedECPoint));
   }
 
-
 }

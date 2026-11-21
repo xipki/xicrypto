@@ -103,7 +103,6 @@ public class CryptoJdk implements CryptoApi {
 
   private static final Map<String, Provider> PROVIDERS = new ConcurrentHashMap<>();
 
-
   /**
    * The XiPKIProvider (module xicrypto) for the algorithms the JDK does not support, with the
    * primitives of the JDK providers. Not registered in {@link Security}.
