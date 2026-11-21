@@ -198,7 +198,8 @@ public abstract class C509SubjectPublicKey extends CborEncodable {
         return "SLH-DSA";
 */
       default:
-        throw new InvalidKeySpecException("unknown key algorithm " + algorithm);
+        throw new InvalidKeySpecException("unknown key algorithm " +
+            ConstPublicKeyAlgorithm.describe(algorithm));
     }
   }
 
