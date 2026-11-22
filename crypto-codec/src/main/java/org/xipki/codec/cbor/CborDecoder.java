@@ -558,7 +558,7 @@ public abstract class CborDecoder implements AutoCloseable {
   protected int readMajorType(int majorType) throws CodecException {
     int ib = read1Byte();
     if (majorType != ((ib >>> 5) & 0x07)) {
-      fail("Unexpected type: %s, expected: %s!", CborType.getName(ib),
+      fail("Unexpected type: %s, expected: %s!", CborType.getName((ib >>> 5) & 0x07),
           CborType.getName(majorType));
     }
     return ib & 0x1F;

@@ -167,7 +167,7 @@ public final class ConstSignatureAlgorithm {
 
   public static final int SIG_dhPop_x448   = 32766;
 
-  public static final int SIG_KEM_GMAC_256 = 32767;
+  public static final int SIG_KEM_HMAC_SHA256 = 32767;
 
   private static final Map<Integer, ConstSignatureAlgorithm> codeToAlgo = new HashMap<>();
 
@@ -274,7 +274,7 @@ public final class ConstSignatureAlgorithm {
     // Private Signature Algorithm, no X.509 AlgorithmIdentifier
     f(SIG_dhPop_x25519, "SIG-DHPOP-X25519", null);
     f(SIG_dhPop_x448,   "SIG-DHPOP-X448",   null);
-    f(SIG_KEM_GMAC_256, "SIG-KEM-GMAC-256", null);
+    f(SIG_KEM_HMAC_SHA256, "SIG-KEM-HMAC-SHA256", null);
   }
 
   private final String name;
@@ -399,7 +399,21 @@ public final class ConstSignatureAlgorithm {
     return !isStaticDhSignature(algId);
   }
 
+  /**
+   * Returns whether the signature value is a DhSigStatic structure: sa-ecdhPop-sha*-hmac-sha*
+   * and the XiPKI DH-PoP algorithms for X25519 and X448.
+   */
   public static boolean isStaticDhSignature(int algId) {
+    return isEcdhPopSignature(algId)
+        || algId == SIG_dhPop_x25519
+        || algId == SIG_dhPop_x448;
+  }
+
+  /**
+   * Returns whether the algorithm is one of sa-ecdhPop-sha*-hmac-sha* (RFC 6955 static DH
+   * proof-of-possession with an EC key).
+   */
+  public static boolean isEcdhPopSignature(int algId) {
     return algId == sa_ecdhPop_sha256_hmac_sha256
         || algId == sa_ecdhPop_sha384_hmac_sha384
         || algId == sa_ecdhPop_sha512_hmac_sha512;

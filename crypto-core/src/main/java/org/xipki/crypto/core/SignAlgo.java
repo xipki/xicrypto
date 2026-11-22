@@ -164,10 +164,10 @@ public enum SignAlgo {
   MLDSA87("ML-DSA-87", 0x62,
       AlgorithmOIDs.id_ml_dsa_87, ConstSignatureAlgorithm.ML_DSA_87, null, false),
 
-  // KEM: decrypt the ciphertext using HPKE to get the shared secret key, using
-  // it to compute the MAC value. The jceName KEM-AEW-GMAC is just a dummy
-  // value.
-  KEM_HMAC_SHA256("KEM-HMAC-SHA256", 0x84, XipkiOIDs.id_alg_KEM_HMAC_SHA256, null, null, false),
+  // KEM: decapsulate the ciphertext to get the shared secret key, and use it as
+  // the HMAC-SHA256 key to compute the MAC value.
+  KEM_HMAC_SHA256("KEM-HMAC-SHA256", 0x84, XipkiOIDs.id_alg_KEM_HMAC_SHA256,
+      ConstSignatureAlgorithm.SIG_KEM_HMAC_SHA256, null, false),
 
   // composite algorithms
   MLDSA44_RSA2048("MLDSA44-RSA2048-PSS-SHA256",
